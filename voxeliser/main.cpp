@@ -8,12 +8,12 @@
 #include "VoxelGrid.h"
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
-    // to do
+    // TODO
     return 0;
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    // to do
+    // TODO
     return false;
 }
 
