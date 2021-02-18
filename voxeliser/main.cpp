@@ -2,6 +2,8 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <string>
+#include <cstring>
 
 #include "Point.h"
 #include "Rows.h"
@@ -25,7 +27,12 @@ int main(int argc, const char *argv[]) {
     // Read file
     std::vector<Point> vertices;
     std::vector<std::vector<unsigned int>> faces;
-    // TODO
+    std::ifstream file("\\Users\\Asus\\Desktop\\OKUL\\DELFT\\Q3\\GEO1004\\Assignment1\\hw1\\bag_bk.obj");
+    std::string str;
+    while (std::getline(file, str)) {
+        std::cout << str << "\n";
+    }
+
 
     // Create grid
     Rows rows;
