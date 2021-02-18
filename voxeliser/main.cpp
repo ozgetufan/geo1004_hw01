@@ -8,12 +8,12 @@
 #include "VoxelGrid.h"
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
-    // to do
+    // TODO
     return 0;
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    // to do
+    // TODO
     return false;
 }
 
@@ -25,23 +25,23 @@ int main(int argc, const char *argv[]) {
     // Read file
     std::vector<Point> vertices;
     std::vector<std::vector<unsigned int>> faces;
-    // to do
+    // TODO
 
     // Create grid
     Rows rows;
-    // to do
+    // TODO
     VoxelGrid voxels(rows.x, rows.y, rows.z);
 
     // Voxelise
     for (auto const &triangle: faces) {
-        // to do
+        // TODO
     }
 
     // Fill model
-    // to do
+    // TODO
 
     // Write voxels
-    // to do
+    // TODO
 
     return 0;
 }
