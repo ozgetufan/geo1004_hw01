@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cassert>
 
+
 #include "Point.h"
 #include "Rows.h"
 #include "VoxelGrid.h"
@@ -32,6 +33,8 @@ int main(int argc, const char *argv[]) {
     std::string str;
     std::string letter;
     float x, y, z;
+    float min_x = 0, min_y = 0, min_z = 0;
+    float max_x = 0, max_y = 0, max_z = 0;
     std::vector<unsigned int> f1(3);
     std::stringstream ss;
     while (std::getline(file, str)) {
@@ -39,6 +42,24 @@ int main(int argc, const char *argv[]) {
         ss >> letter;
         if (letter == "v") {
             ss >> x >> y >> z;
+            if (x < min_x) {
+                min_x = x;
+            }
+            if (y < min_y) {
+                min_y = y;
+            }
+            if (z < min_z) {
+                min_z = z;
+            }
+            if (x > max_x) {
+                max_x = x;
+            }
+            if (y > max_y) {
+                max_y = y;
+            }
+            if (z > max_z) {
+                max_z = x;
+            }
             vertices.emplace_back(Point(x, y, z));
         } else if (letter == "f") {
             ss >> f1[0] >> f1[1] >> f1[2];
@@ -47,12 +68,17 @@ int main(int argc, const char *argv[]) {
         ss.clear();
         ss.str(std::string());
     }
-    assert(faces[100][0] == 84);  // a test to check if they are added correctly
+    assert(faces[100][0] == 84);  // a test to check if the values are added correctly
 
     // Create grid
-    Rows rows;
-    // TODO
+    int row_x = int((max_x - min_x) / voxel_size) + 1; // for each row, we added 1 to make sure that we cover all the area
+    int row_y = int((max_y - min_y) / voxel_size) + 1;
+    int row_z = int((max_z - min_z) / voxel_size) + 1;
+    Rows rows(row_x, row_y, row_z);
     VoxelGrid voxels(rows.x, rows.y, rows.z);
+
+//    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
+//    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
 
     // Voxelise
     for (auto const &triangle: faces) {
