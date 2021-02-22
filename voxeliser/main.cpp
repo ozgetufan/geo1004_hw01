@@ -17,7 +17,14 @@ float signed_volume(const Point &a, const Point &b, const Point &c, const Point 
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    // TODO
+    bool test1 = (bool (signed_volume(orig, dest, v0, v1) > 0 && signed_volume(orig, dest, v0, v2) < 0) || bool (signed_volume(orig, dest, v0, v1) < 0 && signed_volume(orig, dest, v0, v2) > 0));
+    bool test2 = (bool (signed_volume(orig, dest, v1, v0) > 0 && signed_volume(orig, dest, v1, v2) < 0) || bool (signed_volume(orig, dest, v1, v0) < 0 && signed_volume(orig, dest, v1, v2) > 0));
+    bool test3 = (bool (signed_volume(orig, dest, v2, v0) > 0 && signed_volume(orig, dest, v2, v1) < 0) || bool (signed_volume(orig, dest, v2, v0) < 0 && signed_volume(orig, dest, v2, v1) > 0));
+    if (test1 && test2 && test3) {
+        std::cout << "TRUE ------------------------ TRUE !!" << std::endl;
+        return true;
+    }
+    std::cout << "False" << std::endl;
     return false;
 }
 
@@ -86,6 +93,11 @@ int main(int argc, const char *argv[]) {
     std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1000]) << std::endl;
     std::cout << "signed volume: " << signed_volume(vertices[100], vertices[101], vertices[102], vertices[1003]) << std::endl;
     std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1999]) << std::endl;
+
+    for (int i=0; i < 300; i++) {
+        intersects(vertices[i], vertices[i+1], vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]);
+    }
+
 
     // Voxelise
     for (auto const &triangle: faces) {
