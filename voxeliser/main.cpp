@@ -12,8 +12,8 @@
 #include "VoxelGrid.h"
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
-    // TODO
-    return 0;
+    const Point cross = (b-d).cross(c-d);
+    return ((a-d).dot(cross)) / 6;
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
@@ -29,7 +29,7 @@ int main(int argc, const char *argv[]) {
     // Read file
     std::vector<Point> vertices;
     std::vector<std::vector<unsigned int>> faces;
-    std::ifstream file("\\Users\\Asus\\Desktop\\OKUL\\DELFT\\Q3\\GEO1004\\Assignment1\\hw1\\bag_bk.obj");
+    std::ifstream file("../bag_bk.obj");
     std::string str;
     std::string letter;
     float x, y, z;
@@ -79,6 +79,13 @@ int main(int argc, const char *argv[]) {
 
 //    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
 //    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
+
+    //tests
+    std::cout << "Vertices: " << vertices.size() << std::endl;
+    std::cout << "Faces: " << faces.size() << std::endl;
+    std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1000]) << std::endl;
+    std::cout << "signed volume: " << signed_volume(vertices[100], vertices[101], vertices[102], vertices[1003]) << std::endl;
+    std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1999]) << std::endl;
 
     // Voxelise
     for (auto const &triangle: faces) {
