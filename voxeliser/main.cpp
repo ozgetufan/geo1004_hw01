@@ -87,6 +87,7 @@ int main(int argc, const char *argv[]) {
 //    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
 //    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
 
+/*
     //tests
     std::cout << "Vertices: " << vertices.size() << std::endl;
     std::cout << "Faces: " << faces.size() << std::endl;
@@ -97,11 +98,28 @@ int main(int argc, const char *argv[]) {
     for (int i=0; i < 300; i++) {
         intersects(vertices[i], vertices[i+1], vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]);
     }
-
+*/
+    std::cout << "Voxel value: " << voxels(0,0,0) << std::endl;
 
     // Voxelise
     for (auto const &triangle: faces) {
         // TODO
+        // test 1 = signed_volume function (making sure that the segment has 2 vertices on opposite sides of the triangle)
+        // test 2 = intersects function
+        // steps: loop through voxels: define 3 targets per voxel, do test 1 for mesh-triangle and target, do test 2 for mesh-triangle and target
+
+        //std::cout << "Triangle's vertices: v1--- " << vertices[triangle[0]] << "  v2--- " << vertices[triangle[1]] << "  v3--- " << vertices[triangle[2]] << std::endl;
+
+/*        // Voxels loop - VERY EXPENSIVE...
+        for (int x = 0; x < row_x; x++) {
+            std::cout << "X is " << x << " Voxels value: " << voxels(x, 0, 0) << std::endl;
+            for (int y = 0; y < row_y; y++) {
+                std::cout << "Y is " << y << " Voxels value: " << voxels(x, y, 0) << std::endl;
+                for (int z = 0; z < row_z; z++) {
+                    std::cout << "Y is " << z << " Voxels value: " << voxels(x, y, z) << std::endl;
+                }
+            }
+        }*/
     }
 
     // Fill model
