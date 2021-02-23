@@ -34,8 +34,22 @@ std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
     std::vector<Point> bbox3D;
     bbox3D.push_back(Point(*minmaxX.first, *minmaxY.first, *minmaxZ.first));
     bbox3D.push_back(Point(*minmaxX.second, *minmaxY.second, *minmaxZ.second));
-    std::cout << "3D Bbox: " << bbox3D[0] << bbox3D[1] << std::endl;
     return bbox3D;
+}
+
+VoxelGrid miniGrid(std::vector<Point> bbox, float min_x, float min_y, float min_z, float voxelSize) {
+    int minX = floor((bbox[0][0] - min_x) / voxelSize); //ceil, used to round up the result (so we get beginning of the voxel X dimension, not random middle point)
+    int minY = floor((bbox[0][1] - min_y)/ voxelSize);
+    int minZ = floor((bbox[0][2] - min_z)/ voxelSize);
+    int maxX = floor((bbox[1][0] - min_x)/ voxelSize);
+    int maxY = floor((bbox[1][1] - min_y)/ voxelSize);
+    int maxZ = floor((bbox[1][2] - min_z)/ voxelSize);
+    int rowX = maxX - minX + 1;
+    int rowY = maxY - minY + 1;
+    int rowZ = maxZ - minZ + 1;
+    Rows miniRows(rowX, rowY, rowZ);
+    VoxelGrid miniGrid(miniRows.x, miniRows.y, miniRows.z);
+    return miniGrid;
 }
 
 int main(int argc, const char *argv[]) {
@@ -97,42 +111,30 @@ int main(int argc, const char *argv[]) {
 //    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
 //    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
 
-/*
-    //tests
-    std::cout << "Vertices: " << vertices.size() << std::endl;
-    std::cout << "Faces: " << faces.size() << std::endl;
-    std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1000]) << std::endl;
-    std::cout << "signed volume: " << signed_volume(vertices[100], vertices[101], vertices[102], vertices[1003]) << std::endl;
-    std::cout << "signed volume: " << signed_volume(vertices[0], vertices[1], vertices[2], vertices[1999]) << std::endl;
-
-    for (int i=0; i < 300; i++) {
-        intersects(vertices[i], vertices[i+1], vertices[faces[i][0]], vertices[faces[i][1]], vertices[faces[i][2]]);
-    }
-*/
-    std::cout << "Voxel value: " << voxels(0,0,0) << std::endl;
-    std::cout << "Voxel grid X: " << row_x << std::endl;
-    std::cout << "Voxel grid Y: " << row_y << std::endl;
-    std::cout << "Voxel grid Z: " << row_z << std::endl;
-    std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
-
     // Voxelise
+    std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
+    std::cout << "Original voxel grid has: = " << voxels.max_x << " max Y = " << voxels.max_y << " max Z = " << voxels.max_z << std::endl;
     int n = 1;
     for (auto const &triangle: faces) {
+        std::cout << " " << std::endl;
         std::cout << "Triangle number " << n << std::endl;
-        // triangle's vertex
+        // triangle's vertices
         Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
-        bbox(t0, t1, t2);
+        // Check bbox validity
+        std::cout << "3D Bbox: " << bbox(t0, t1, t2)[0] << bbox(t0, t1, t2)[1] << std::endl;
+        assert(bbox(t0, t1, t2)[0][0] <= bbox(t0, t1, t2)[1][0]
+        && bbox(t0, t1, t2)[0][1] <= bbox(t0, t1, t2)[1][1]
+        && bbox(t0, t1, t2)[0][2] <= bbox(t0, t1, t2)[1][2]);
+        // We get the voxel subset corresponding to the triangle
+        VoxelGrid subset = miniGrid(bbox(t0, t1, t2), min_x, min_y, min_z, voxel_size);
+        std::cout << "Voxel subset has max X = " << subset.max_x << " max Y = " << subset.max_y << " max Z = " << subset.max_z << std::endl;
+        std::cout << "Number of voxels to test: " << subset.max_z * subset.max_y * subset.max_x << std::endl;
+        assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
 
-/*        // Voxels in z dimension loop:
-        for (int z = 0; z < row_z; z++) {
-            // Voxels coordinates of lower x rows
-            float voxZ = min_z + z * voxel_size;
-            float voxX = min_x, voxY = min_y, voxNextZ = min_z + (z+1) * voxel_size;
-            if (v1[2] <= voxNextZ && v1[2] >= voxZ) {
-                std::cout << "We found the voxel zRow, it's coordinates are, x: " << voxX << " and y " << voxY << " and z " << voxZ << std::endl;
-            }
-        }*/
-
+        // to work on small amount of triangles and make it work first => to be deleted later
+        if (n > 10) {
+            return 0;
+        }
         n++;
     }
 
