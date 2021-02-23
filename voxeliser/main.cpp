@@ -38,7 +38,7 @@ std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
 }
 
 VoxelGrid miniGrid(std::vector<Point> bbox, float min_x, float min_y, float min_z, float voxelSize) {
-    int minX = floor((bbox[0][0] - min_x) / voxelSize); //ceil, used to round up the result (so we get beginning of the voxel X dimension, not random middle point)
+    int minX = floor((bbox[0][0] - min_x) / voxelSize); // "ceil", used to round up and "floor" to round down
     int minY = floor((bbox[0][1] - min_y)/ voxelSize);
     int minZ = floor((bbox[0][2] - min_z)/ voxelSize);
     int maxX = floor((bbox[1][0] - min_x)/ voxelSize);
@@ -121,7 +121,7 @@ int main(int argc, const char *argv[]) {
         // triangle's vertices
         Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
         // Check bbox validity
-        std::cout << "3D Bbox: " << bbox(t0, t1, t2)[0] << bbox(t0, t1, t2)[1] << std::endl;
+        //std::cout << "3D Bbox: " << bbox(t0, t1, t2)[0] << bbox(t0, t1, t2)[1] << std::endl;
         assert(bbox(t0, t1, t2)[0][0] <= bbox(t0, t1, t2)[1][0]
         && bbox(t0, t1, t2)[0][1] <= bbox(t0, t1, t2)[1][1]
         && bbox(t0, t1, t2)[0][2] <= bbox(t0, t1, t2)[1][2]);
@@ -130,6 +130,48 @@ int main(int argc, const char *argv[]) {
         std::cout << "Voxel subset has max X = " << subset.max_x << " max Y = " << subset.max_y << " max Z = " << subset.max_z << std::endl;
         std::cout << "Number of voxels to test: " << subset.max_z * subset.max_y * subset.max_x << std::endl;
         assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
+
+        // loop through the subset
+        int voxelCount = 0;
+        for (int x = 0; x < subset.max_x; x++) {
+            for (int y = 0; y < subset.max_y; y++) {
+                for (int z = 0; z < subset.max_z; z++) {
+                    voxelCount++;
+                    //std::cout << "Pixel coordinates: X = " << x << " Y = " << y+1 << " Z = " << z+1 << " --------- VOXEL NUMBER " << voxelCount << std::endl;
+                }
+            }
+        }
+        // Check that the number of voxels in the loop is equivalent to the number expected
+        assert(voxelCount == subset.max_z * subset.max_y * subset.max_x);
+
+
+/*        // test number 1 (signed_volume): targets possibly intersecting triangle
+        for (int i = 0; i < subset.max_x; i++) {
+            // defining targets to test using the subset
+            Point targetA1((i + 1/2) * voxel_size, i, (i + 1/2) * voxel_size);
+            Point targetA2((i + 1/2) * voxel_size, (i + 1) * voxel_size, (i + 1/2) * voxel_size);
+            Point targetB1(i, (i + 1/2) * voxel_size, (i + 1/2) * voxel_size);
+            Point targetB2((i + 1) * voxel_size, (i + 1/2) * voxel_size, (i + 1/2) * voxel_size);
+            Point targetC1((i + 1/2) * voxel_size, (i + 1/2) * voxel_size, i);
+            Point targetC2((i + 1/2) * voxel_size, (i + 1/2) * voxel_size, (i + 1) * voxel_size);
+            // tests, 2 corresponding targets have to be on different side of the triangle
+            bool testA = bool (signed_volume(t0, t1, t2, targetA1) >= 0 && signed_volume(t0, t1, t2, targetA2) <= 0)
+                    || bool (signed_volume(t0, t1, t2, targetA1) <= 0 && signed_volume(t0, t1, t2, targetA2) >= 0);
+            bool testB = bool (signed_volume(t0, t1, t2, targetB1) >= 0 && signed_volume(t0, t1, t2, targetB2) <= 0)
+                         || bool (signed_volume(t0, t1, t2, targetB1) <= 0 && signed_volume(t0, t1, t2, targetB2) >= 0);
+            bool testC = bool (signed_volume(t0, t1, t2, targetC1) >= 0 && signed_volume(t0, t1, t2, targetC2) <= 0)
+                         || bool (signed_volume(t0, t1, t2, targetC1) <= 0 && signed_volume(t0, t1, t2, targetC2) >= 0);
+            if (testA && testB && testC) {
+                std::cout << "The voxel might intersect the triangle, let's try out !" << std::endl;
+                // test number 2 (intersects function) if test one validated: target really intersects the triangle
+                if (intersects(targetA1, targetA2, t0, t1, t2) && intersects(targetB1, targetB2, t0, t1, t2) && intersects(targetC1, targetC2, t0, t1, t2)) {
+                    std::cout << "We have an intersection with the triangle !!!!!!!!!!!!!!!!!!!!! :) " << std::endl;
+                }
+            }
+            else {
+                std::cout << "No intersection, sorry !" << std::endl;
+            }
+        }*/
 
         // to work on small amount of triangles and make it work first => to be deleted later
         if (n > 10) {
