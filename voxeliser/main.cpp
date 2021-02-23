@@ -28,6 +28,16 @@ bool intersects(const Point &orig, const Point &dest, const Point &v0, const Poi
     return false;
 }
 
+std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
+    std::vector<float> x = {v0[0], v1[0], v2[0]}, y = {v0[1], v1[1], v2[1]}, z = {v0[2], v1[2], v2[2]};
+    auto minmaxX = std::minmax_element(x.begin(), x.end()), minmaxY = std::minmax_element(y.begin(), y.end()), minmaxZ = std::minmax_element(z.begin(), z.end());
+    std::vector<Point> bbox3D;
+    bbox3D.push_back(Point(*minmaxX.first, *minmaxY.first, *minmaxZ.first));
+    bbox3D.push_back(Point(*minmaxX.second, *minmaxY.second, *minmaxZ.second));
+    std::cout << "3D Bbox: " << bbox3D[0] << bbox3D[1] << std::endl;
+    return bbox3D;
+}
+
 int main(int argc, const char *argv[]) {
     const char *file_in = "bag_bk.obj";
     const char *file_out = "vox.obj";
@@ -110,8 +120,10 @@ int main(int argc, const char *argv[]) {
     for (auto const &triangle: faces) {
         std::cout << "Triangle number " << n << std::endl;
         // triangle's vertex
-        Point v1 = vertices[triangle[0]], v2 = vertices[triangle[1]], v3 = vertices[triangle[2]];
-        // Voxels in z dimension loop:
+        Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
+        bbox(t0, t1, t2);
+
+/*        // Voxels in z dimension loop:
         for (int z = 0; z < row_z; z++) {
             // Voxels coordinates of lower x rows
             float voxZ = min_z + z * voxel_size;
@@ -119,7 +131,8 @@ int main(int argc, const char *argv[]) {
             if (v1[2] <= voxNextZ && v1[2] >= voxZ) {
                 std::cout << "We found the voxel zRow, it's coordinates are, x: " << voxX << " and y " << voxY << " and z " << voxZ << std::endl;
             }
-        }
+        }*/
+
         n++;
     }
 
