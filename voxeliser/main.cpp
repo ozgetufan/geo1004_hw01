@@ -17,14 +17,17 @@ float signed_volume(const Point &a, const Point &b, const Point &c, const Point 
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    bool test1 = (bool (signed_volume(orig, dest, v0, v1) > 0 && signed_volume(orig, dest, v0, v2) < 0) || bool (signed_volume(orig, dest, v0, v1) < 0 && signed_volume(orig, dest, v0, v2) > 0));
-    bool test2 = (bool (signed_volume(orig, dest, v1, v0) > 0 && signed_volume(orig, dest, v1, v2) < 0) || bool (signed_volume(orig, dest, v1, v0) < 0 && signed_volume(orig, dest, v1, v2) > 0));
-    bool test3 = (bool (signed_volume(orig, dest, v2, v0) > 0 && signed_volume(orig, dest, v2, v1) < 0) || bool (signed_volume(orig, dest, v2, v0) < 0 && signed_volume(orig, dest, v2, v1) > 0));
+    bool test1 = (bool (signed_volume(orig, dest, v0, v1) > 0 && signed_volume(orig, dest, v0, v2) < 0)
+            || bool (signed_volume(orig, dest, v0, v1) < 0 && signed_volume(orig, dest, v0, v2) > 0));
+    bool test2 = (bool (signed_volume(orig, dest, v1, v0) > 0 && signed_volume(orig, dest, v1, v2) < 0)
+            || bool (signed_volume(orig, dest, v1, v0) < 0 && signed_volume(orig, dest, v1, v2) > 0));
+    bool test3 = (bool (signed_volume(orig, dest, v2, v0) > 0 && signed_volume(orig, dest, v2, v1) < 0)
+            || bool (signed_volume(orig, dest, v2, v0) < 0 && signed_volume(orig, dest, v2, v1) > 0));
     if (test1 && test2 && test3) {
-        std::cout << "TRUE ------------------------ TRUE !!" << std::endl;
+        //std::cout << "TRUE ------------------------ TRUE !!" << std::endl;
         return true;
     }
-    std::cout << "False" << std::endl;
+    //std::cout << "False" << std::endl;
     return false;
 }
 
@@ -138,43 +141,41 @@ int main(int argc, const char *argv[]) {
                 for (int z = 0; z < subset.max_z; z++) {
                     voxelCount++;
                     //std::cout << "Pixel coordinates: X = " << x << " Y = " << y+1 << " Z = " << z+1 << " --------- VOXEL NUMBER " << voxelCount << std::endl;
+                    // Voxel's target
+                    Point targetA1((x + 1/2) * voxel_size, y, (z + 1/2) * voxel_size);
+                    Point targetA2((x + 1/2) * voxel_size, (y + 1) * voxel_size, (z + 1/2) * voxel_size);
+                    Point targetB1(x, (y + 1/2) * voxel_size, (z + 1/2) * voxel_size);
+                    Point targetB2((x + 1) * voxel_size, (y + 1/2) * voxel_size, (z + 1/2) * voxel_size);
+                    Point targetC1((x + 1/2) * voxel_size, (y + 1/2) * voxel_size, z);
+                    Point targetC2((x + 1/2) * voxel_size, (y + 1/2) * voxel_size, (z + 1) * voxel_size);
+                    // test number 1: 2 corresponding targets have to be on different side of the triangle
+                    bool testA = bool (signed_volume(t0, t1, t2, targetA1) >= 0 && signed_volume(t0, t1, t2, targetA2) <= 0)
+                                 || bool (signed_volume(t0, t1, t2, targetA1) <= 0 && signed_volume(t0, t1, t2, targetA2) >= 0);
+                    bool testB = bool (signed_volume(t0, t1, t2, targetB1) >= 0 && signed_volume(t0, t1, t2, targetB2) <= 0)
+                                 || bool (signed_volume(t0, t1, t2, targetB1) <= 0 && signed_volume(t0, t1, t2, targetB2) >= 0);
+                    bool testC = bool (signed_volume(t0, t1, t2, targetC1) >= 0 && signed_volume(t0, t1, t2, targetC2) <= 0)
+                                 || bool (signed_volume(t0, t1, t2, targetC1) <= 0 && signed_volume(t0, t1, t2, targetC2) >= 0);
+                    if (testA && testB && testC) {
+                        std::cout << "TEST 1 VALIDATED !" << std::endl;
+                        // test number 2 (intersects function): does the target really intersects the triangle ?
+                        if (intersects(targetA1, targetA2, t0, t1, t2) && intersects(targetB1, targetB2, t0, t1, t2) && intersects(targetC1, targetC2, t0, t1, t2)) {
+                            std::cout << "We have an intersection with the triangle !!!!!!!!!!!!!!!!!!!!! :) " << std::endl;
+                        }
+                        else {
+                            //std::cout << "TEST 2 failed... sorry !" << std::endl;
+                        }
+                    }
+                    else {
+                        std::cout << "TEST 1 already failed... sorry !" << std::endl;
+                    }
                 }
             }
         }
         // Check that the number of voxels in the loop is equivalent to the number expected
         assert(voxelCount == subset.max_z * subset.max_y * subset.max_x);
 
-
-/*        // test number 1 (signed_volume): targets possibly intersecting triangle
-        for (int i = 0; i < subset.max_x; i++) {
-            // defining targets to test using the subset
-            Point targetA1((i + 1/2) * voxel_size, i, (i + 1/2) * voxel_size);
-            Point targetA2((i + 1/2) * voxel_size, (i + 1) * voxel_size, (i + 1/2) * voxel_size);
-            Point targetB1(i, (i + 1/2) * voxel_size, (i + 1/2) * voxel_size);
-            Point targetB2((i + 1) * voxel_size, (i + 1/2) * voxel_size, (i + 1/2) * voxel_size);
-            Point targetC1((i + 1/2) * voxel_size, (i + 1/2) * voxel_size, i);
-            Point targetC2((i + 1/2) * voxel_size, (i + 1/2) * voxel_size, (i + 1) * voxel_size);
-            // tests, 2 corresponding targets have to be on different side of the triangle
-            bool testA = bool (signed_volume(t0, t1, t2, targetA1) >= 0 && signed_volume(t0, t1, t2, targetA2) <= 0)
-                    || bool (signed_volume(t0, t1, t2, targetA1) <= 0 && signed_volume(t0, t1, t2, targetA2) >= 0);
-            bool testB = bool (signed_volume(t0, t1, t2, targetB1) >= 0 && signed_volume(t0, t1, t2, targetB2) <= 0)
-                         || bool (signed_volume(t0, t1, t2, targetB1) <= 0 && signed_volume(t0, t1, t2, targetB2) >= 0);
-            bool testC = bool (signed_volume(t0, t1, t2, targetC1) >= 0 && signed_volume(t0, t1, t2, targetC2) <= 0)
-                         || bool (signed_volume(t0, t1, t2, targetC1) <= 0 && signed_volume(t0, t1, t2, targetC2) >= 0);
-            if (testA && testB && testC) {
-                std::cout << "The voxel might intersect the triangle, let's try out !" << std::endl;
-                // test number 2 (intersects function) if test one validated: target really intersects the triangle
-                if (intersects(targetA1, targetA2, t0, t1, t2) && intersects(targetB1, targetB2, t0, t1, t2) && intersects(targetC1, targetC2, t0, t1, t2)) {
-                    std::cout << "We have an intersection with the triangle !!!!!!!!!!!!!!!!!!!!! :) " << std::endl;
-                }
-            }
-            else {
-                std::cout << "No intersection, sorry !" << std::endl;
-            }
-        }*/
-
         // to work on small amount of triangles and make it work first => to be deleted later
-        if (n > 10) {
+        if (n > 1000) {
             return 0;
         }
         n++;
