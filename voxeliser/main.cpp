@@ -100,26 +100,27 @@ int main(int argc, const char *argv[]) {
     }
 */
     std::cout << "Voxel value: " << voxels(0,0,0) << std::endl;
+    std::cout << "Voxel grid X: " << row_x << std::endl;
+    std::cout << "Voxel grid Y: " << row_y << std::endl;
+    std::cout << "Voxel grid Z: " << row_z << std::endl;
+    std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
 
     // Voxelise
+    int n = 1;
     for (auto const &triangle: faces) {
-        // TODO
-        // test 1 = signed_volume function (making sure that the segment has 2 vertices on opposite sides of the triangle)
-        // test 2 = intersects function
-        // steps: loop through voxels: define 3 targets per voxel, do test 1 for mesh-triangle and target, do test 2 for mesh-triangle and target
-
-        //std::cout << "Triangle's vertices: v1--- " << vertices[triangle[0]] << "  v2--- " << vertices[triangle[1]] << "  v3--- " << vertices[triangle[2]] << std::endl;
-
-/*        // Voxels loop - VERY EXPENSIVE...
-        for (int x = 0; x < row_x; x++) {
-            std::cout << "X is " << x << " Voxels value: " << voxels(x, 0, 0) << std::endl;
-            for (int y = 0; y < row_y; y++) {
-                std::cout << "Y is " << y << " Voxels value: " << voxels(x, y, 0) << std::endl;
-                for (int z = 0; z < row_z; z++) {
-                    std::cout << "Y is " << z << " Voxels value: " << voxels(x, y, z) << std::endl;
-                }
+        std::cout << "Triangle number " << n << std::endl;
+        // triangle's vertex
+        Point v1 = vertices[triangle[0]], v2 = vertices[triangle[1]], v3 = vertices[triangle[2]];
+        // Voxels in z dimension loop:
+        for (int z = 0; z < row_z; z++) {
+            // Voxels coordinates of lower x rows
+            float voxZ = min_z + z * voxel_size;
+            float voxX = min_x, voxY = min_y, voxNextZ = min_z + (z+1) * voxel_size;
+            if (v1[2] <= voxNextZ && v1[2] >= voxZ) {
+                std::cout << "We found the voxel zRow, it's coordinates are, x: " << voxX << " and y " << voxY << " and z " << voxZ << std::endl;
             }
-        }*/
+        }
+        n++;
     }
 
     // Fill model
