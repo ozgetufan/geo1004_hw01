@@ -133,8 +133,8 @@ int main(int argc, const char *argv[]) {
     std::cout << "Original voxel grid has: = " << voxels.max_x << " max Y = " << voxels.max_y << " max Z = " << voxels.max_z << std::endl;
     int n = 1;
     for (auto const &triangle: faces) {
-        std::cout << " " << std::endl;
-        std::cout << "Triangle number " << n << std::endl;
+//        std::cout << " " << std::endl;
+//        std::cout << "Triangle number " << n << std::endl;
         // triangle's vertices
         Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
         // Check bbox validity
@@ -144,8 +144,8 @@ int main(int argc, const char *argv[]) {
         && bbox(t0, t1, t2)[0][2] <= bbox(t0, t1, t2)[1][2]);
         // We get the voxel subset corresponding to the triangle
         VoxelGrid subset = miniGrid(bbox(t0, t1, t2), min_x, min_y, min_z, voxel_size);
-        std::cout << "Voxel subset has max X = " << subset.max_x << " max Y = " << subset.max_y << " max Z = " << subset.max_z << std::endl;
-        std::cout << "Number of voxels to test: " << subset.max_z * subset.max_y * subset.max_x << std::endl;
+//        std::cout << "Voxel subset has max X = " << subset.max_x << " max Y = " << subset.max_y << " max Z = " << subset.max_z << std::endl;
+//        std::cout << "Number of voxels to test: " << subset.max_z * subset.max_y * subset.max_x << std::endl;
         assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
 
         // loop through the subset
@@ -175,7 +175,7 @@ int main(int argc, const char *argv[]) {
 
 
                     }
-                    std::cout << voxels(x, y, z);
+//                    std::cout << voxels(x, y, z);
 //                    else {
 //                        std::cout << "We don't have an intersection" << std::endl;
 //                    }
@@ -204,14 +204,38 @@ int main(int argc, const char *argv[]) {
             return 0;
         }
         n++;
-    }
 
+    }
+    std::cout << "Hello" <<std::endl;
 
     // Fill model
     // TODO
 
     // Write voxels
     // TODO
+    std::vector<Point> new_vertices;
+    std::vector<std::vector<unsigned int>> new_faces;
+//    unsigned int total_voxels = (voxels.max_x * voxels.max_y * voxels.max_z);
+    for (int x1 = 0; x1 < max_x; x1++) {
+        for (int y1 = 0; y1 < max_y; y1++) {
+            for (int z1 = 0; z1 < max_z; z1++) {
+                new_vertices.emplace_back(Point(x1, y1, z1));
+            }
+        }
+    }
+//    std::cout << new_vertices[0] << std::endl;
+    std::ofstream output_file(file_out);
+    if (output_file.is_open())
+    {
+        for(int i = 0; i < new_vertices.size(); i++)
+        {
+            output_file << "v " << new_vertices[i][0] << " " << new_vertices[i][1] << " " << new_vertices[i][2] << "\n";
+        }
+        std::cout << "file is written" << std::endl;
+        output_file.close();
+    }
+    else std::cout << "Unable to open file";
+
 
     return 0;
 }
