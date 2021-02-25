@@ -5,6 +5,7 @@
 #include <string>
 #include <cstring>
 #include <cassert>
+#include <algorithm>
 
 
 #include "Point.h"
@@ -16,18 +17,31 @@ float signed_volume(const Point &a, const Point &b, const Point &c, const Point 
     return ((a-d).dot(cross)) / 6;
 }
 
+//bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
+//    bool test1 = (bool (signed_volume(orig, dest, v0, v1) > 0 && signed_volume(orig, dest, v0, v2) < 0)
+//            || bool (signed_volume(orig, dest, v0, v1) < 0 && signed_volume(orig, dest, v0, v2) > 0));
+//    bool test2 = (bool (signed_volume(orig, dest, v1, v0) > 0 && signed_volume(orig, dest, v1, v2) < 0)
+//            || bool (signed_volume(orig, dest, v1, v0) < 0 && signed_volume(orig, dest, v1, v2) > 0));
+//    bool test3 = (bool (signed_volume(orig, dest, v2, v0) > 0 && signed_volume(orig, dest, v2, v1) < 0)
+//            || bool (signed_volume(orig, dest, v2, v0) < 0 && signed_volume(orig, dest, v2, v1) > 0));
+//    if (test1 && test2 && test3) {
+//        //std::cout << "TRUE ------------------------ TRUE !!" << std::endl;
+//        return true;
+//    }
+//    //std::cout << "False" << std::endl;
+//    return false;
+//}
+
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    bool test1 = (bool (signed_volume(orig, dest, v0, v1) > 0 && signed_volume(orig, dest, v0, v2) < 0)
-            || bool (signed_volume(orig, dest, v0, v1) < 0 && signed_volume(orig, dest, v0, v2) > 0));
-    bool test2 = (bool (signed_volume(orig, dest, v1, v0) > 0 && signed_volume(orig, dest, v1, v2) < 0)
-            || bool (signed_volume(orig, dest, v1, v0) < 0 && signed_volume(orig, dest, v1, v2) > 0));
-    bool test3 = (bool (signed_volume(orig, dest, v2, v0) > 0 && signed_volume(orig, dest, v2, v1) < 0)
-            || bool (signed_volume(orig, dest, v2, v0) < 0 && signed_volume(orig, dest, v2, v1) > 0));
-    if (test1 && test2 && test3) {
-        //std::cout << "TRUE ------------------------ TRUE !!" << std::endl;
-        return true;
+    if(signed_volume(v0, v1, v2, orig) * signed_volume(v0, v1, v2, dest) <= 0){
+        float test1 = signed_volume(orig, dest, v0, v1) * signed_volume(orig, dest, v0, v2);
+        float test2 = signed_volume(orig, dest, v1, v0) * signed_volume(orig, dest, v1, v2);
+        float test3 = signed_volume(orig, dest, v2, v0) * signed_volume(orig, dest, v2, v1);
+        if (test1 < 0 && test2 < 0 && test3 < 0){
+            return true;
+        }
+        return false;
     }
-    //std::cout << "False" << std::endl;
     return false;
 }
 
