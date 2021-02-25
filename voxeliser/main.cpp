@@ -70,14 +70,14 @@ VoxelGrid miniGrid(std::vector<Point> bbox, float min_x, float min_y, float min_
 }
 
 int main(int argc, const char *argv[]) {
-    const char *file_in = "bag_bk.obj";
+    const char *file_in = "../bag_bk.obj";
     const char *file_out = "vox.obj";
     float voxel_size = 1.0;
 
     // Read file
     std::vector<Point> vertices;
     std::vector<std::vector<unsigned int>> faces;
-    std::ifstream file("../bag_bk.obj");
+    std::ifstream file(file_in);
     std::string str;
     std::string letter;
     float x, y, z;
@@ -172,6 +172,7 @@ int main(int argc, const char *argv[]) {
                     if (intersects(targetA1, targetA2, t0, t1, t2) || intersects(targetB1, targetB2, t0, t1, t2) || intersects(targetC1, targetC2, t0, t1, t2)) {
 //                        std::cout << "We have an intersection with the triangle !!!!!!!!!!!!!!!!!!!!! :) " << std::endl;
                         voxels(x, y, z) = 1;
+
 
                     }
                     std::cout << voxels(x, y, z);
