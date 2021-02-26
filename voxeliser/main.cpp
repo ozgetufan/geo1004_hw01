@@ -84,6 +84,7 @@ int main(int argc, const char *argv[]) {
     float min_x = 0, min_y = 0, min_z = 0;
     float max_x = 0, max_y = 0, max_z = 0;
     std::vector<unsigned int> f1(3);
+    unsigned int v1, v2, v3;
     std::stringstream ss;
     while (std::getline(file, str)) {
         ss << str;
@@ -110,13 +111,18 @@ int main(int argc, const char *argv[]) {
             }
             vertices.emplace_back(Point(x, y, z));
         } else if (letter == "f") {
-            ss >> f1[0] >> f1[1] >> f1[2];
+            ss >> v1 >> v2 >> v3;
+            f1 = {v1 - 1, v2 - 1, v3 - 1};
             faces.emplace_back(f1);
         }
         ss.clear();
         ss.str(std::string());
     }
-    assert(faces[100][0] == 84);  // a test to check if the values are added correctly
+//    std::cout << vertices.size() << std::endl;
+//    std::cout << vertices[2417] << std::endl;
+//    std::cout << vertices[2418] << std::endl;
+//    return 0;
+    assert(faces[100][0] == 83);  // a test to check if the values are added correctly
 
     // Create grid
     int row_x = int((max_x - min_x) / voxel_size) + 1; // for each row, we added 1 to make sure that we cover all the area
@@ -131,7 +137,7 @@ int main(int argc, const char *argv[]) {
     // Voxelise
     std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
     std::cout << "Original voxel grid has: = " << voxels.max_x << " max Y = " << voxels.max_y << " max Z = " << voxels.max_z << std::endl;
-    int n = 1;
+    int n = 0;
     for (auto const &triangle: faces) {
 //        std::cout << " " << std::endl;
 //        std::cout << "Triangle number " << n << std::endl;
@@ -147,7 +153,6 @@ int main(int argc, const char *argv[]) {
 //        std::cout << "Voxel subset has max X = " << subset.max_x << " max Y = " << subset.max_y << " max Z = " << subset.max_z << std::endl;
 //        std::cout << "Number of voxels to test: " << subset.max_z * subset.max_y * subset.max_x << std::endl;
         assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
-
         // loop through the subset
         int voxelCount = 0;
         for (int x = 0; x < subset.max_x; x++) {
@@ -156,12 +161,12 @@ int main(int argc, const char *argv[]) {
                     voxelCount++;
                     //std::cout << "Pixel coordinates: X = " << x << " Y = " << y+1 << " Z = " << z+1 << " --------- VOXEL NUMBER " << voxelCount << std::endl;
                     // Voxel's target
-                    Point targetA1((x + 1/2) * voxel_size, y, (z + 1/2) * voxel_size);
-                    Point targetA2((x + 1/2) * voxel_size, (y + 1) * voxel_size, (z + 1/2) * voxel_size);
-                    Point targetB1(x, (y + 1/2) * voxel_size, (z + 1/2) * voxel_size);
-                    Point targetB2((x + 1) * voxel_size, (y + 1/2) * voxel_size, (z + 1/2) * voxel_size);
-                    Point targetC1((x + 1/2) * voxel_size, (y + 1/2) * voxel_size, z);
-                    Point targetC2((x + 1/2) * voxel_size, (y + 1/2) * voxel_size, (z + 1) * voxel_size);
+                    Point targetA1((x + 0.5) * voxel_size, y, (z + 0.5) * voxel_size);
+                    Point targetA2((x + 0.5) * voxel_size, (y + 1) * voxel_size, (z + 0.5) * voxel_size);
+                    Point targetB1(x, (y + 0.5) * voxel_size, (z + 0.5) * voxel_size);
+                    Point targetB2((x + 1) * voxel_size, (y + 0.5) * voxel_size, (z + 0.5) * voxel_size);
+                    Point targetC1((x + 0.5) * voxel_size, (y + 0.5) * voxel_size, z);
+                    Point targetC2((x + 0.5) * voxel_size, (y + 0.5) * voxel_size, (z + 1) * voxel_size);
                     // test number 1: 2 corresponding targets have to be on different side of the triangle
 //                    bool testA = bool (signed_volume(t0, t1, t2, targetA1) >= 0 && signed_volume(t0, t1, t2, targetA2) <= 0)
 //                                 || bool (signed_volume(t0, t1, t2, targetA1) <= 0 && signed_volume(t0, t1, t2, targetA2) >= 0);
@@ -175,7 +180,6 @@ int main(int argc, const char *argv[]) {
 
 
                     }
-//                    std::cout << voxels(x, y, z);
 //                    else {
 //                        std::cout << "We don't have an intersection" << std::endl;
 //                    }
@@ -200,12 +204,13 @@ int main(int argc, const char *argv[]) {
 
 
         // to work on small amount of triangles and make it work first => to be deleted later
-        if (n > 1000) {
-            return 0;
-        }
+//        if (n > 1000) {
+//            return 0;
+//        }
+//        std::cout << n <<std::endl;
         n++;
-
     }
+
     std::cout << "Hello" <<std::endl;
 
     // Fill model
