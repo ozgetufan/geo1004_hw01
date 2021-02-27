@@ -23,11 +23,11 @@ float signed_volume(const Point &a, const Point &b, const Point &c, const Point 
 }
 
 bool intersects(const Point &orig, const Point &dest, const Point &v0, const Point &v1, const Point &v2) {
-    if(signed_volume(v0, v1, v2, orig) * signed_volume(v0, v1, v2, dest) <= 0){
+    if(signed_volume(v0, v1, v2, orig) * signed_volume(v0, v1, v2, dest) <= 0) {
         float test1 = signed_volume(orig, dest, v0, v1) * signed_volume(orig, dest, v0, v2);
         float test2 = signed_volume(orig, dest, v1, v0) * signed_volume(orig, dest, v1, v2);
         float test3 = signed_volume(orig, dest, v2, v0) * signed_volume(orig, dest, v2, v1);
-        if (test1 < 0 && test2 < 0 && test3 < 0){
+        if (test1 < 0 && test2 < 0 && test3 < 0) {
             return true;
         }
         return false;
@@ -196,7 +196,7 @@ int main(int argc, const char *argv[]) {
     std::cout << "Original voxel grid has: X = " << voxels.max_x << " Y = " << voxels.max_y << " Z = " << voxels.max_z << std::endl;
     int n = 0;
     for (auto const &triangle: faces) {
-        std::cout << "Triangle number " << n << std::endl;
+        //std::cout << "Triangle number " << n << std::endl;
         // triangle's vertices
         Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
         // Check bbox validity
@@ -222,11 +222,10 @@ int main(int argc, const char *argv[]) {
                 offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
         int row_x = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x;
         int row_y = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y;
-        int row_z = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z;
+        int row_z = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z +1;
         Rows miniRows(row_x, row_y, row_z);
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
         assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
-        //std::cout << "Subgrid dimension: X = " << subset.max_x << " Y = " << subset.max_y << " Z = " << subset.max_z << std::endl;
         // loop through the subset
         int voxelCount = 0;
         for (int x = 0; x < subset.max_x -1; x += voxel_size) {
@@ -234,30 +233,18 @@ int main(int argc, const char *argv[]) {
                 for (int z = 0; z < subset.max_z -1; z += voxel_size) {
                     voxelCount++;
                     // equivalence with big grid
-                    int bigX = offsetX + x, bigY = offsetY + y, bigZ = offsetZ + z;
-                    std::cout << "Equivalent big grid: " << bigX << " Y " << bigY << " Z " << bigZ << std::endl;
+                    int bigX = offsetX + x * voxel_size, bigY = offsetY + y * voxel_size, bigZ = offsetZ + z * voxel_size;
+                    //std::cout << "Equivalent big grid: " << bigX << " Y " << bigY << " Z " << bigZ << std::endl;
                     // Voxel's target
-                    Point targetA1((bigX + 0.5) * voxel_size, bigY * voxel_size, (bigZ + 0.5) * voxel_size);
-                    Point targetA2((bigX + 0.5) * voxel_size, (bigY + 1) * voxel_size, (bigZ + 0.5) * voxel_size);
-                    Point targetB1(bigX * voxel_size, (bigY + 0.5) * voxel_size, (bigZ + 0.5) * voxel_size);
-                    Point targetB2((bigX + 1) * voxel_size, (bigY + 0.5) * voxel_size, (bigZ + 0.5) * voxel_size);
-                    Point targetC1((bigX + 0.5) * voxel_size, (bigY + 0.5) * voxel_size, bigZ * voxel_size);
-                    Point targetC2((bigX + 0.5) * voxel_size, (bigY + 0.5) * voxel_size, (bigZ + 1) * voxel_size);
+                    Point targetA1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + bigY * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
+                    Point targetA2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 1) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
+                    Point targetB1(floor(min_x) + bigX * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
+                    Point targetB2(floor(min_x) + (bigX + 1) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
+                    Point targetC1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + bigZ * voxel_size);
+                    Point targetC2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 1) * voxel_size);
                     // we assign 1 to the voxel intersecting the triangular mesh
                     if (intersects(targetA1, targetA2, t0, t1, t2) || intersects(targetB1, targetB2, t0, t1, t2) || intersects(targetC1, targetC2, t0, t1, t2)) {
-                        // find equivalent voxel in big grid
-                        voxels(bigX, bigY, bigZ) = 1;
-/*                        Point p1(bigX, bigY, bigZ), p2(bigX+voxel_size, bigY, bigZ), p3(bigX+voxel_size, bigY+voxel_size, bigZ), p4(bigX, bigY+voxel_size, bigZ),
-                        p5(bigX, bigY, bigZ+voxel_size), p6(bigX+voxel_size, y, bigZ+voxel_size), p7(bigX+voxel_size, bigY+voxel_size, bigZ+voxel_size), p8(x, bigY+voxel_size, bigZ+voxel_size);
-                        //new_vertices.emplace_back(p1, p2, p3, p4, p5, p6, p7, p8);
-                        new_vertices.push_back(p1);
-                        new_vertices.push_back(p2);
-                        new_vertices.push_back(p3);
-                        new_vertices.push_back(p4);
-                        new_vertices.push_back(p5);
-                        new_vertices.push_back(p6);
-                        new_vertices.push_back(p7);
-                        new_vertices.push_back(p8);*/
+                        voxels(bigX, bigY, bigZ) = 2;
                     }
                 }
             }
@@ -267,27 +254,41 @@ int main(int argc, const char *argv[]) {
         n++;
     }
 
-    // Fill model
+/*    // Fill model
     std::vector<unsigned int> starting_voxel_idx = {voxels.max_x - 1, 0, 0};
     find_air(starting_voxel_idx, voxels);
     for (int i = 0; i < voxels.total_voxels; i++ ) {
         if (voxels.voxels[i] == 0) {
             voxels.voxels[i] = 1;
         }
-    }
+    }*/
 
     // Write voxels
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
 //    unsigned int total_voxels = (voxels.max_x * voxels.max_y * voxels.max_z);
-    for (int x1 = floor(min_x); x1 < (voxels.max_x + floor(min_x)); x1 += voxel_size) {
-        for (int y1 = floor(min_y); y1 < (voxels.max_y + floor(min_y)); y1 += voxel_size) {
-            for (int z1 = floor(min_z); z1 < (voxels.max_z + floor(min_z)); z1 += voxel_size) {
-                //std::cout << "Voxel value = " << voxels(x1,y1,z1) << std::endl;
-                new_vertices.emplace_back(Point(x1, y1, z1));
+    for (int x1 = 0; x1 < voxels.max_x-1; x1 += voxel_size) {
+        for (int y1 = 0; y1 < voxels.max_y-1; y1 += voxel_size) {
+            for (int z1 = 0; z1 < voxels.max_z-1; z1 += voxel_size) {
+                //std::cout << " " << voxels(x1, y1, z1);
+                if (bool(voxels(x1, y1, z1) == 2) || bool(voxels(x1, y1, z1) == 1)) {
+                    Point p1(floor(min_x) + x1 * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + z1 * voxel_size),
+                    p2(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + z1 * voxel_size),
+                            p3(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + z1 * voxel_size),
+                            p4(floor(min_x) + x1 * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + z1 * voxel_size),
+                            p5(floor(min_x) + x1 * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + (z1+1) * voxel_size),
+                            p6(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + (z1+1) * voxel_size),
+                            p7(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + (z1+1) * voxel_size),
+                            p8(floor(min_x) + x1 * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + (z1+1) * voxel_size);
+                    new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
+                    new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
+                    new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
+                    new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
+                }
             }
         }
     }
+
 //    std::cout << new_vertices[0] << std::endl;
     std::ofstream output_file(file_out);
     if (output_file.is_open())
