@@ -44,43 +44,6 @@ std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
     return bbox3D;
 }
 
-VoxelGrid miniGrid(std::vector<Point> bbox, float voxelSize) {
-/*    float min_x, float min_y, float min_z,
- * int minX = floor((bbox[0][0] - min_x) / voxelSize); // "ceil", used to round up and "floor" to round down
-    int minY = floor((bbox[0][1] - min_y)/ voxelSize);
-    int minZ = floor((bbox[0][2] - min_z)/ voxelSize);
-    int maxX = floor((bbox[1][0] - min_x)/ voxelSize);
-    int maxY = floor((bbox[1][1] - min_y)/ voxelSize);
-    int maxZ = floor((bbox[1][2] - min_z)/ voxelSize);
-    int rowX = maxX - minX + 1;
-    int rowY = maxY - minY + 1;
-    int rowZ = maxZ - minZ + 1;
-    Rows miniRows(rowX, rowY, rowZ);
-    VoxelGrid miniGrid(miniRows.x, miniRows.y, miniRows.z);
-    return miniGrid;*/
-    // Create grid
-    int fix_x, fix_y, fix_z;
-    float diffX = bbox[1][0] - bbox[0][0], diffY = bbox[1][1] - bbox[0][1], diffZ = bbox[1][2] - bbox[0][2];
-    if (diffX == 0) {
-        fix_x = 1;
-    }
-    else fix_x = ceil((bbox[1][0] - floor(bbox[1][0]) + bbox[0][0] - floor(bbox[0][0])) / voxelSize);
-    if (diffY == 0) {
-        fix_y = 1;
-    }
-    else fix_y = ceil((bbox[1][1] - floor(bbox[1][1]) + bbox[0][1] - floor(bbox[0][1])) / voxelSize);
-    if (diffZ == 0) {
-        fix_z = 1;
-    }
-    else fix_z = ceil((bbox[1][2] - floor(bbox[1][2]) + bbox[0][2] - floor(bbox[0][2])) / voxelSize);
-    int row_x = ((floor(bbox[1][0]) - floor(bbox[0][0])) / voxelSize) + fix_x;
-    int row_y = ((floor(bbox[1][1]) - floor(bbox[0][1])) / voxelSize) + fix_y;
-    int row_z = ((floor(bbox[1][2]) - floor(bbox[0][2])) / voxelSize) + fix_z;
-    Rows miniRows(row_x, row_y, row_z);
-    VoxelGrid miniGrid(miniRows.x, miniRows.y, miniRows.z);
-    return miniGrid;
-}
-
 std::string my_to_string(const std::vector<unsigned int>& vec) {
     std::string out;
     for (auto s : vec) {
@@ -282,8 +245,10 @@ int main(int argc, const char *argv[]) {
                             p8(floor(min_x) + x1 * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + (z1+1) * voxel_size);
                     new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
                     new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
-                    new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
-                    new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
+                    if ((z1 + voxel_size) >= voxels.max_z-1) {
+                        new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
+                        new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
+                    } else continue;
                 }
             }
         }
