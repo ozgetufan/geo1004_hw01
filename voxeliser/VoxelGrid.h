@@ -4,12 +4,13 @@
 struct VoxelGrid {
   std::vector<unsigned int> voxels;
   unsigned int max_x, max_y, max_z;
-  
+  unsigned int total_voxels = 0;  // Ask prof
+
   VoxelGrid(unsigned int x, unsigned int y, unsigned int z) {
     max_x = x;
     max_y = y;
     max_z = z;
-    unsigned int total_voxels = x*y*z;
+    total_voxels = x*y*z;
     voxels.reserve(total_voxels);
     for (unsigned int i = 0; i < total_voxels; ++i) voxels.push_back(0);
   }

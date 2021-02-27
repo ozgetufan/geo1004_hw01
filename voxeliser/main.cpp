@@ -6,11 +6,16 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
-
+#include <unordered_set>
 
 #include "Point.h"
 #include "Rows.h"
 #include "VoxelGrid.h"
+
+void find_air(const std::vector<unsigned int> &vox_idx, VoxelGrid& voxels);
+void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<std::string>& visited,
+                          std::unordered_set<std::string>& unvisited, VoxelGrid& voxels);
+std::string my_to_string(const std::vector<unsigned int>& vec);
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
     const Point cross = (b-d).cross(c-d);
@@ -67,6 +72,52 @@ VoxelGrid miniGrid(std::vector<Point> bbox, float min_x, float min_y, float min_
     Rows miniRows(rowX, rowY, rowZ);
     VoxelGrid miniGrid(miniRows.x, miniRows.y, miniRows.z);
     return miniGrid;
+}
+
+std::string my_to_string(const std::vector<unsigned int>& vec) {
+    std::string out;
+    for (auto s : vec) {
+        out += static_cast<char>(s);
+    }
+    return out;
+}
+
+void find_air(const std::vector<unsigned int>& vox_idx, VoxelGrid& voxels) {
+    std::unordered_set<std::string> visited, unvisited;
+    if (voxels(vox_idx[0], vox_idx[1], vox_idx[2]) == 1) {
+        std::cerr << "Starting voxel is not empty" << std::endl;
+        exit(1);
+    }
+    voxels(vox_idx[0], vox_idx[1], vox_idx[2]) = 2;
+    std::string idx_str = my_to_string(vox_idx);
+    visited.insert(idx_str);
+    find_empty_neighbors(idx_str, visited, unvisited, voxels);
+    while (!unvisited.empty()) {
+        std::string current_vox = *(unvisited.begin());
+        visited.insert(current_vox);
+        find_empty_neighbors(current_vox, visited, unvisited, voxels);
+        unvisited.erase(current_vox);
+    }
+}
+
+void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<std::string>& visited,
+                          std::unordered_set<std::string>& unvisited, VoxelGrid& voxels) {
+    unsigned int i = static_cast<unsigned char>(vox_idx[0]);
+    unsigned int j = static_cast<unsigned char>(vox_idx[1]);
+    unsigned int k = static_cast<unsigned char>(vox_idx[2]);
+    std::vector<std::vector<unsigned int>> neighbors = {{i - 1, j, k}, {i + 1, j, k}, {i, j - 1, k}, {i, j + 1, k},
+                                                        {i, j, k - 1}, {i, j, k + 1}};
+    for (const auto& n : neighbors) {
+        if ((0 <= n[0]) && (n[0] < voxels.max_x) && (0 <= n[1]) && (n[1] < voxels.max_y) && (0 <= n[2]) && (n[2] < voxels.max_z)) {
+            if (voxels(n[0], n[1], n[2]) != 1) {
+                std::string curr_vox = my_to_string(n);
+                if (unvisited.find(curr_vox) == unvisited.end() && (visited.find(curr_vox) == visited.end())){
+                    voxels(n[0], n[1], n[2]) = 2;
+                    unvisited.insert(curr_vox);
+                }
+            }
+        }
+    }
 }
 
 int main(int argc, const char *argv[]) {
@@ -161,11 +212,11 @@ int main(int argc, const char *argv[]) {
                     voxelCount++;
                     //std::cout << "Pixel coordinates: X = " << x << " Y = " << y+1 << " Z = " << z+1 << " --------- VOXEL NUMBER " << voxelCount << std::endl;
                     // Voxel's target
-                    Point targetA1((x + 0.5) * voxel_size, y, (z + 0.5) * voxel_size);
+                    Point targetA1((x + 0.5) * voxel_size, y * voxel_size, (z + 0.5) * voxel_size);
                     Point targetA2((x + 0.5) * voxel_size, (y + 1) * voxel_size, (z + 0.5) * voxel_size);
-                    Point targetB1(x, (y + 0.5) * voxel_size, (z + 0.5) * voxel_size);
+                    Point targetB1(x * voxel_size, (y + 0.5) * voxel_size, (z + 0.5) * voxel_size);
                     Point targetB2((x + 1) * voxel_size, (y + 0.5) * voxel_size, (z + 0.5) * voxel_size);
-                    Point targetC1((x + 0.5) * voxel_size, (y + 0.5) * voxel_size, z);
+                    Point targetC1((x + 0.5) * voxel_size, (y + 0.5) * voxel_size, z * voxel_size);
                     Point targetC2((x + 0.5) * voxel_size, (y + 0.5) * voxel_size, (z + 1) * voxel_size);
                     // test number 1: 2 corresponding targets have to be on different side of the triangle
 //                    bool testA = bool (signed_volume(t0, t1, t2, targetA1) >= 0 && signed_volume(t0, t1, t2, targetA2) <= 0)
@@ -180,6 +231,7 @@ int main(int argc, const char *argv[]) {
 
 
                     }
+//                    std::cout << voxels(x, y, z);
 //                    else {
 //                        std::cout << "We don't have an intersection" << std::endl;
 //                    }
@@ -200,21 +252,35 @@ int main(int argc, const char *argv[]) {
             }
         }
         // Check that the number of voxels in the loop is equivalent to the number expected
-        assert(voxelCount == subset.max_z * subset.max_y * subset.max_x);
+        assert(voxelCount == subset.total_voxels);
 
 
         // to work on small amount of triangles and make it work first => to be deleted later
 //        if (n > 1000) {
 //            return 0;
 //        }
-//        std::cout << n <<std::endl;
+
         n++;
     }
 
-    std::cout << "Hello" <<std::endl;
+//    std::cout << "Hello" <<std::endl;
+//    for (int i = 0; i < max_x; i++) {
+//        for (int j = 0; j < max_y; j++) {
+//            for (int k = 0; k < max_z; k++) {
+//                std::cout << voxels(x, y, z);
+//            }
+//        }
+//    }
 
     // Fill model
     // TODO
+    std::vector<unsigned int> starting_voxel_idx = {voxels.max_x - 1, 0, 0};
+    find_air(starting_voxel_idx, voxels);
+    for (int i = 0; i < voxels.total_voxels; i++ ) {
+        if (voxels.voxels[i] == 0) {
+            voxels.voxels[i] = 1;
+        }
+    }
 
     // Write voxels
     // TODO
