@@ -96,7 +96,7 @@ void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<s
 int main(int argc, const char *argv[]) {
     const char *file_in = "../bag_bk.obj";
     const char *file_out = "vox.obj";
-    float voxel_size = 5.0;
+    float voxel_size = 3.0;
 
     // Read file
     std::vector<Point> vertices;
@@ -178,6 +178,9 @@ int main(int argc, const char *argv[]) {
             fix_z = 1;
         }
         else fix_z = ceil((box[1][2] - floor(box[1][2]) + box[0][2] - floor(box[0][2])) / voxel_size);
+/*        int offsetX = floor(box[0][0] - min_x / voxel_size),
+                offsetY = floor(box[0][1] - min_y / voxel_size),
+                offsetZ = floor(box[0][2]  - min_z / voxel_size);*/
         int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size,
                 offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size,
                 offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
@@ -188,12 +191,10 @@ int main(int argc, const char *argv[]) {
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
         assert(subset.total_voxels < voxels.total_voxels);
         // loop through the subset
-        //int voxelCount = 0;
-        for (int x = 0; x < subset.max_x -1; x += 1) {
-            for (int y = 0; y < subset.max_y -1; y += 1) {
-                for (int z = 0; z < subset.max_z -1; z += 1) {
-                    //voxelCount++;
-                    // equivalence with big grid
+        for (int x = 0; x < subset.max_x-1; x += 1) {
+            for (int y = 0; y < subset.max_y-1; y += 1) {
+                for (int z = 0; z < subset.max_z-1; z += 1) {
+                    // Equivalence with big grid
                     int bigX = offsetX + x, bigY = offsetY + y, bigZ = offsetZ + z;
                     // Voxel's target
                     Point targetA1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + bigY * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
@@ -202,7 +203,7 @@ int main(int argc, const char *argv[]) {
                     Point targetB2(floor(min_x) + (bigX + 1) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
                     Point targetC1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + bigZ * voxel_size);
                     Point targetC2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 1) * voxel_size);
-                    // we assign 1 to the voxel intersecting the triangular mesh
+                    // We assign 1 to the voxel intersecting the triangular mesh
                     if (intersects(targetA1, targetA2, t0, t1, t2) || intersects(targetB1, targetB2, t0, t1, t2) || intersects(targetC1, targetC2, t0, t1, t2)) {
                         voxels(bigX, bigY, bigZ) = 2;
                     }
@@ -220,68 +221,88 @@ int main(int argc, const char *argv[]) {
         }
     }*/
 
-/*    // Fill model
+    // Fill model: the queue starts with an angle and gets filled with its neighbors (if voxel value == 0)
     std::deque<std::vector<int>> q;
     q.push_back({0,0,0});
     while (!q.empty()){
         std::vector<int> vec = q.front();
         voxels(vec[0], vec[1], vec[2]) = 1;
-        //std::cout << " " << voxels(vec[0], vec[1], vec[2]);
-        std::cout << " " << q.size();
         q.pop_front();
-        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
-            && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
-            && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0] + 1, vec[1] + 1, vec[2] + 1) == 0))
+        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x)
+            && (vec[1] >= 0) && (vec[1] < voxels.max_y)
+            && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0] + 1, vec[1], vec[2]) == 0))
         {
-            q.push_back({vec[0] + 1, vec[1] + 1, vec[2] + 1});
-        }
-        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
-            && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
-            && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]-1, vec[2]-1) == 0))
+            std::vector<int> v1{vec[0] +1, vec[1], vec[2]};
+            if (std::find(q.begin(), q.end(), v1) == q.end()) {
+                q.push_back(v1);
+            }
+            else continue; }
+        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
+             && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y)
+             && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1] + 1, vec[2]) == 0))
         {
-            q.push_back ({vec[0]-1, vec[1]-1, vec[2]-1});
-        }
-        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
-            && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
-            && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0] + 1, vec[1] - 1, vec[2] - 1) == 0))
+            std::vector<int> v2{vec[0], vec[1] + 1, vec[2]};
+            if (std::find(q.begin(), q.end(), v2) == q.end()) {
+                q.push_back(v2);
+            }
+            else continue; }
+        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
+             && (vec[1] >= 0) && (vec[1] < voxels.max_y)
+             && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]+1) == 0))
         {
-            q.push_back({vec[0] + 1, vec[1] - 1, vec[2] - 1});
-        }
-        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
-                && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
-                && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0]+1, vec[1]+1, vec[2]-1) == 0))
-                {
-            q.push_back ({vec[0]+1, vec[1]+1, vec[2]-1});
-                }
-        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
-                && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
-                && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]+1, vec[2]+1) == 0))
-                {
-            q.push_back ({vec[0]-1, vec[1]+1, vec[2]+1});
-                }
-        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
-                && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
-                && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]-1, vec[2]+1) == 0))
-                {
-                q.push_back ({vec[0]-1, vec[1]-1, vec[2]+1});
-                }
-        if (q.size() > 5000000) {
-            break;
-        }
-    }*/
+            std::vector<int> v3{vec[0], vec[1], vec[2] + 1};
+            if (std::find(q.begin(), q.end(), v3) == q.end()) {
+                q.push_back(v3);
+            }
+            else continue; }
+        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x)
+            && (vec[1] >= 0) && (vec[1] < voxels.max_y)
+            && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0]-1, vec[1], vec[2]) == 0))
+        {
+            std::vector<int> v4{vec[0]-1, vec[1], vec[2]};
+            if (std::find(q.begin(), q.end(), v4) == q.end()) {
+                q.push_back(v4);
+            }
+            else continue; }
+        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
+                && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y)
+                && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1]-1, vec[2]) == 0))
+        {
+            std::vector<int> v5{vec[0], vec[1]-1, vec[2]};
+            if (std::find(q.begin(), q.end(), v5) == q.end()) {
+                q.push_back(v5);
+            }
+            else continue; }
+        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
+                && (vec[1] >= 0) && (vec[1] < voxels.max_y)
+                && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]-1) == 0))
+        {
+            std::vector<int> v6{vec[0], vec[1], vec[2]-1};
+            if (std::find(q.begin(), q.end(), v6) == q.end()) {
+                q.push_back(v6);
+            }
+            else continue; }
+        assert (q.size() <= voxels.total_voxels);
+    }
 
     // Write voxels
+    int bound = 0, interior = 0;
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
     // "dist" allows to scale the voxel representation (voxel_size * 0.5 gives scale 1 representation)
     float dist = voxel_size * 0.4;
     assert(2 * dist <= voxel_size);
     unsigned int id = 1;
-    for (int x1 = 0; x1 < voxels.max_x-1; x1 += 1) {
-        for (int y1 = 0; y1 < voxels.max_y-1; y1 += 1) {
-            for (int z1 = 0; z1 < voxels.max_z-1; z1 += 1) {
-                //if (bool(voxels(x1, y1, z1) == 2) || bool(voxels(x1, y1, z1) == 1)) {
+    for (int x1 = 0; x1 < voxels.max_x; x1 += 1) {
+        for (int y1 = 0; y1 < voxels.max_y; y1 += 1) {
+            for (int z1 = 0; z1 < voxels.max_z; z1 += 1) {
+                if (voxels(x1, y1, z1) == 0) {
+                    interior++;
+                }
                 if (voxels(x1, y1, z1) == 2) {
+                    bound++;
+                }
+                if (voxels(x1, y1, z1) != 1) {
                     Point center((floor(min_x) + (x1 + 0.5) * voxel_size), (floor(min_y) + (y1 + 0.5) * voxel_size), (floor(min_z) + (z1 + 0.5) * voxel_size));
                     // Points to store
                     Point p1(center[0] - dist, center[1] - dist, center[2] - dist);
@@ -330,7 +351,9 @@ int main(int argc, const char *argv[]) {
     else std::cout << "Unable to open file";
 
     // Compute and print out the building's volume
-    // TODO
+    float vox_volume = voxel_size * voxel_size;
+    float volume = bound * vox_volume/2 + interior * vox_volume;
+    std::cout << "The building's volume is " << volume << " meter cubes." << std::endl;
 
     return 0;
 }
