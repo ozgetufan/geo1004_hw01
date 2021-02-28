@@ -151,6 +151,9 @@ int main(int argc, const char *argv[]) {
     Rows rows(row_x, row_y, row_z);
     VoxelGrid voxels(rows.x, rows.y, rows.z);
 
+//    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
+//    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
+
     // Voxelise
     std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
     std::cout << "Original voxel grid has: X = " << voxels.max_x << " Y = " << voxels.max_y << " Z = " << voxels.max_z << std::endl;
@@ -223,7 +226,7 @@ int main(int argc, const char *argv[]) {
     // Write voxels
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
-    // vx = scale we want to visualise the voxels (voxel_size * 0.5 = scale 1)
+    // vx allows to scale the voxel representation (voxel_size*0.5 gices scale 1 representation)
     float vx = voxel_size * 0.1;
     assert(2*vx <= voxel_size);
     unsigned int id = 1;
@@ -282,9 +285,7 @@ int main(int argc, const char *argv[]) {
                 }
             }
         }
-    }
 
-//    std::cout << new_vertices[0] << std::endl;
     std::ofstream output_file(file_out);
     if (output_file.is_open())
     {
