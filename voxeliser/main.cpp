@@ -7,15 +7,16 @@
 #include <cassert>
 #include <algorithm>
 #include <unordered_set>
+# include <deque>
 
 #include "Point.h"
 #include "Rows.h"
 #include "VoxelGrid.h"
 
-void find_air(const std::vector<unsigned int> &vox_idx, VoxelGrid& voxels);
+/*void find_air(const std::vector<unsigned int> &vox_idx, VoxelGrid& voxels);
 void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<std::string>& visited,
                           std::unordered_set<std::string>& unvisited, VoxelGrid& voxels);
-std::string my_to_string(const std::vector<unsigned int>& vec);
+std::string my_to_string(const std::vector<unsigned int>& vec);*/
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
     const Point cross = (b-d).cross(c-d);
@@ -44,6 +45,7 @@ std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
     return bbox3D;
 }
 
+/*
 std::string my_to_string(const std::vector<unsigned int>& vec) {
     std::string out;
     for (auto s : vec) {
@@ -89,11 +91,12 @@ void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<s
         }
     }
 }
+*/
 
 int main(int argc, const char *argv[]) {
     const char *file_in = "../bag_bk.obj";
     const char *file_out = "vox.obj";
-    float voxel_size = 1.0;
+    float voxel_size = 5.0;
 
     // Read file
     std::vector<Point> vertices;
@@ -145,21 +148,16 @@ int main(int argc, const char *argv[]) {
     int fix_x = ceil((max_x - floor(max_x) + min_x - floor(min_x)) / voxel_size);
     int fix_y = ceil((max_y - floor(max_y) + min_y - floor(min_y)) / voxel_size);
     int fix_z = ceil((max_z - floor(max_z) + min_z - floor(min_z)) / voxel_size);
-    int row_x = ((floor(max_x) - floor(min_x)) / voxel_size) + fix_x;
-    int row_y = ((floor(max_y) - floor(min_y)) / voxel_size) + fix_y;
-    int row_z = ((floor(max_z) - floor(min_z)) / voxel_size) + fix_z;
+    int row_x = floor(((max_x) - (min_x)) / voxel_size) + fix_x;
+    int row_y = floor(((max_y) - (min_y)) / voxel_size) + fix_y;
+    int row_z = floor(((max_z) - (min_z)) / voxel_size) + fix_z;
     Rows rows(row_x, row_y, row_z);
     VoxelGrid voxels(rows.x, rows.y, rows.z);
-
-//    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
-//    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
 
     // Voxelise
     std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
     std::cout << "Original voxel grid has: X = " << voxels.max_x << " Y = " << voxels.max_y << " Z = " << voxels.max_z << std::endl;
-    int n = 0;
     for (auto const &triangle: faces) {
-        //std::cout << "Triangle number " << n << std::endl;
         // triangle's vertices
         Point t0 = vertices[triangle[0]], t1 = vertices[triangle[1]], t2 = vertices[triangle[2]];
         // Check bbox validity
@@ -188,15 +186,15 @@ int main(int argc, const char *argv[]) {
         int row_z = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z +1;
         Rows miniRows(row_x, row_y, row_z);
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
-        assert(subset.max_z * subset.max_y * subset.max_x < voxels.max_x * voxels.max_y * voxels.max_z);
+        assert(subset.total_voxels < voxels.total_voxels);
         // loop through the subset
-        int voxelCount = 0;
-        for (int x = 0; x < subset.max_x -1; x += voxel_size) {
-            for (int y = 0; y < subset.max_y -1; y += voxel_size) {
-                for (int z = 0; z < subset.max_z -1; z += voxel_size) {
-                    voxelCount++;
+        //int voxelCount = 0;
+        for (int x = 0; x < subset.max_x -1; x += 1) {
+            for (int y = 0; y < subset.max_y -1; y += 1) {
+                for (int z = 0; z < subset.max_z -1; z += 1) {
+                    //voxelCount++;
                     // equivalence with big grid
-                    int bigX = offsetX + x * voxel_size, bigY = offsetY + y * voxel_size, bigZ = offsetZ + z * voxel_size;
+                    int bigX = offsetX + x, bigY = offsetY + y, bigZ = offsetZ + z;
                     // Voxel's target
                     Point targetA1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + bigY * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
                     Point targetA2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 1) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
@@ -211,7 +209,6 @@ int main(int argc, const char *argv[]) {
                 }
             }
         }
-        n++;
     }
 
 /*    // Fill model
@@ -223,19 +220,69 @@ int main(int argc, const char *argv[]) {
         }
     }*/
 
+/*    // Fill model
+    std::deque<std::vector<int>> q;
+    q.push_back({0,0,0});
+    while (!q.empty()){
+        std::vector<int> vec = q.front();
+        voxels(vec[0], vec[1], vec[2]) = 1;
+        //std::cout << " " << voxels(vec[0], vec[1], vec[2]);
+        std::cout << " " << q.size();
+        q.pop_front();
+        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
+            && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
+            && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0] + 1, vec[1] + 1, vec[2] + 1) == 0))
+        {
+            q.push_back({vec[0] + 1, vec[1] + 1, vec[2] + 1});
+        }
+        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
+            && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
+            && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]-1, vec[2]-1) == 0))
+        {
+            q.push_back ({vec[0]-1, vec[1]-1, vec[2]-1});
+        }
+        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
+            && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
+            && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0] + 1, vec[1] - 1, vec[2] - 1) == 0))
+        {
+            q.push_back({vec[0] + 1, vec[1] - 1, vec[2] - 1});
+        }
+        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x-1)
+                && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
+                && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z-1)) && (voxels(vec[0]+1, vec[1]+1, vec[2]-1) == 0))
+                {
+            q.push_back ({vec[0]+1, vec[1]+1, vec[2]-1});
+                }
+        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
+                && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y-1)
+                && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]+1, vec[2]+1) == 0))
+                {
+            q.push_back ({vec[0]-1, vec[1]+1, vec[2]+1});
+                }
+        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x-1)
+                && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y-1)
+                && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z-1)) && (voxels(vec[0]-1, vec[1]-1, vec[2]+1) == 0))
+                {
+                q.push_back ({vec[0]-1, vec[1]-1, vec[2]+1});
+                }
+        if (q.size() > 5000000) {
+            break;
+        }
+    }*/
+
     // Write voxels
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
-    // vx allows to scale the voxel representation (voxel_size*0.5 gices scale 1 representation)
-    float vx = voxel_size * 0.1;
-    assert(2*vx <= voxel_size);
+    // "dist" allows to scale the voxel representation (voxel_size * 0.5 gives scale 1 representation)
+    float dist = voxel_size * 0.4;
+    assert(2 * dist <= voxel_size);
     unsigned int id = 1;
-    for (int x1 = 0; x1 < voxels.max_x-1; x1 += voxel_size) {
-        for (int y1 = 0; y1 < voxels.max_y-1; y1 += voxel_size) {
-            for (int z1 = 0; z1 < voxels.max_z-1; z1 += voxel_size) {
-                if (bool(voxels(x1, y1, z1) == 2) || bool(voxels(x1, y1, z1) == 1)) {
-                    Point center((min_x + (x1 + 0.5) * voxel_size), (min_y + (y1 + 0.5) * voxel_size), (min_z + (z1 + 0.5) * voxel_size));
-                    float dist = sqrt(vx);
+    for (int x1 = 0; x1 < voxels.max_x-1; x1 += 1) {
+        for (int y1 = 0; y1 < voxels.max_y-1; y1 += 1) {
+            for (int z1 = 0; z1 < voxels.max_z-1; z1 += 1) {
+                //if (bool(voxels(x1, y1, z1) == 2) || bool(voxels(x1, y1, z1) == 1)) {
+                if (voxels(x1, y1, z1) == 2) {
+                    Point center((floor(min_x) + (x1 + 0.5) * voxel_size), (floor(min_y) + (y1 + 0.5) * voxel_size), (floor(min_z) + (z1 + 0.5) * voxel_size));
                     // Points to store
                     Point p1(center[0] - dist, center[1] - dist, center[2] - dist);
                     Point p2(center[0] + dist, center[1] - dist, center[2] - dist);
@@ -249,38 +296,15 @@ int main(int argc, const char *argv[]) {
                     std::vector<unsigned int> faceDown{id, id+1, id+2, id+3}, faceUp{id+4, id+5, id+6, id+7},
                             faceLeft{id, id+4, id+7, id+3}, faceRight{id+1, id+5, id+6, id+2},
                             faceFront{id, id+1, id+5, id+4}, faceBack{id+3, id+2, id+6, id+7};
-
-                    if (2*vx < voxel_size) {
-                        new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
-                        new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
-                        new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
-                        new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
-                        new_faces.emplace_back(faceDown), new_faces.emplace_back(faceUp),
-                                new_faces.emplace_back(faceRight), new_faces.emplace_back(faceLeft),
-                                new_faces.emplace_back(faceFront), new_faces.emplace_back(faceBack);
-                        id+=8;
-                    }
-/*                    // TODO - find out how to avoid redundancy if we represent the voxel scale 1.
-                    if (2*vx == voxel_size) {
-                        // First voxel line
-                        if (bool(z1 == 0) || bool(x1 == 0) || bool(y1 == 0)) {
-                            new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
-                            new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
-                            //new_faces.emplace_back(faceDown);
-                            id+=4;
-                        }
-                        else new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
-                        //new_faces.emplace_back(faceDown);
-                        //new_faces.emplace_back(faceRight);
-                        //new_faces.emplace_back(faceFront);
-                        id+=2;
-                        // last voxel line
-                        if ((z1 + voxel_size) >= voxels.max_z-1) {
-                            new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
-                            new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
-                            //new_faces.emplace_back(faceUp);
-                            id+=4;
-                        } else continue;*/
+                    // Store them in lists
+                    new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
+                    new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
+                    new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
+                    new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
+                    new_faces.emplace_back(faceDown), new_faces.emplace_back(faceUp),
+                            new_faces.emplace_back(faceRight), new_faces.emplace_back(faceLeft),
+                            new_faces.emplace_back(faceFront), new_faces.emplace_back(faceBack);
+                    id+=8;
                     }
                 }
             }
