@@ -151,9 +151,6 @@ int main(int argc, const char *argv[]) {
     Rows rows(row_x, row_y, row_z);
     VoxelGrid voxels(rows.x, rows.y, rows.z);
 
-//    voxels(5, 7, 9) = 5;     // A test to assign value to a voxel
-//    std::cout << "voxel test: " << voxels(5, 7, 9) << std::endl;
-
     // Voxelise
     std::cout << "Voxels total: " << voxels.max_x * voxels.max_y * voxels.max_z << std::endl;
     std::cout << "Original voxel grid has: X = " << voxels.max_x << " Y = " << voxels.max_y << " Z = " << voxels.max_z << std::endl;
@@ -183,8 +180,8 @@ int main(int argc, const char *argv[]) {
         int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size,
                 offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size,
                 offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
-        int row_x = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x;
-        int row_y = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y;
+        int row_x = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x +1;
+        int row_y = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y +1;
         int row_z = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z +1;
         Rows miniRows(row_x, row_y, row_z);
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
@@ -197,7 +194,6 @@ int main(int argc, const char *argv[]) {
                     voxelCount++;
                     // equivalence with big grid
                     int bigX = offsetX + x * voxel_size, bigY = offsetY + y * voxel_size, bigZ = offsetZ + z * voxel_size;
-                    //std::cout << "Equivalent big grid: " << bigX << " Y " << bigY << " Z " << bigZ << std::endl;
                     // Voxel's target
                     Point targetA1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + bigY * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
                     Point targetA2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 1) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
@@ -212,8 +208,6 @@ int main(int argc, const char *argv[]) {
                 }
             }
         }
-        // Check that the number of voxels in the loop is equivalent to the number expected
-        //assert(voxelCount == subset.total_voxels);
         n++;
     }
 
@@ -229,26 +223,62 @@ int main(int argc, const char *argv[]) {
     // Write voxels
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
-//    unsigned int total_voxels = (voxels.max_x * voxels.max_y * voxels.max_z);
+    // vx = scale we want to visualise the voxels (voxel_size * 0.5 = scale 1)
+    float vx = voxel_size * 0.1;
+    assert(2*vx <= voxel_size);
+    unsigned int id = 1;
     for (int x1 = 0; x1 < voxels.max_x-1; x1 += voxel_size) {
         for (int y1 = 0; y1 < voxels.max_y-1; y1 += voxel_size) {
             for (int z1 = 0; z1 < voxels.max_z-1; z1 += voxel_size) {
-                //std::cout << " " << voxels(x1, y1, z1);
                 if (bool(voxels(x1, y1, z1) == 2) || bool(voxels(x1, y1, z1) == 1)) {
-                    Point p1(floor(min_x) + x1 * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + z1 * voxel_size),
-                    p2(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + z1 * voxel_size),
-                            p3(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + z1 * voxel_size),
-                            p4(floor(min_x) + x1 * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + z1 * voxel_size),
-                            p5(floor(min_x) + x1 * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + (z1+1) * voxel_size),
-                            p6(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + y1 * voxel_size, floor(min_z) + (z1+1) * voxel_size),
-                            p7(floor(min_x) + (x1+1) * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + (z1+1) * voxel_size),
-                            p8(floor(min_x) + x1 * voxel_size, floor(min_y) + (y1+1) * voxel_size, floor(min_z) + (z1+1) * voxel_size);
-                    new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
-                    new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
-                    if ((z1 + voxel_size) >= voxels.max_z-1) {
+                    Point center((min_x + (x1 + 0.5) * voxel_size), (min_y + (y1 + 0.5) * voxel_size), (min_z + (z1 + 0.5) * voxel_size));
+                    float dist = sqrt(vx);
+                    // Points to store
+                    Point p1(center[0] - dist, center[1] - dist, center[2] - dist);
+                    Point p2(center[0] + dist, center[1] - dist, center[2] - dist);
+                    Point p3(center[0] + dist, center[1] + dist, center[2] - dist);
+                    Point p4(center[0] - dist, center[1] + dist, center[2] - dist);
+                    Point p5(center[0] - dist, center[1] - dist, center[2] + dist);
+                    Point p6(center[0] + dist, center[1] - dist, center[2] + dist);
+                    Point p7(center[0] + dist, center[1] + dist, center[2] + dist);
+                    Point p8(center[0] - dist, center[1] + dist, center[2] + dist);
+                    // Faces to store
+                    std::vector<unsigned int> faceDown{id, id+1, id+2, id+3}, faceUp{id+4, id+5, id+6, id+7},
+                            faceLeft{id, id+4, id+7, id+3}, faceRight{id+1, id+5, id+6, id+2},
+                            faceFront{id, id+1, id+5, id+4}, faceBack{id+3, id+2, id+6, id+7};
+
+                    if (2*vx < voxel_size) {
+                        new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
+                        new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
                         new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
                         new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
-                    } else continue;
+                        new_faces.emplace_back(faceDown), new_faces.emplace_back(faceUp),
+                                new_faces.emplace_back(faceRight), new_faces.emplace_back(faceLeft),
+                                new_faces.emplace_back(faceFront), new_faces.emplace_back(faceBack);
+                        id+=8;
+                    }
+/*                    // TODO - find out how to avoid redundancy if we represent the voxel scale 1.
+                    if (2*vx == voxel_size) {
+                        // First voxel line
+                        if (bool(z1 == 0) || bool(x1 == 0) || bool(y1 == 0)) {
+                            new_vertices.emplace_back(p1), new_vertices.emplace_back(p2);
+                            new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
+                            //new_faces.emplace_back(faceDown);
+                            id+=4;
+                        }
+                        else new_vertices.emplace_back(p3), new_vertices.emplace_back(p4);
+                        //new_faces.emplace_back(faceDown);
+                        //new_faces.emplace_back(faceRight);
+                        //new_faces.emplace_back(faceFront);
+                        id+=2;
+                        // last voxel line
+                        if ((z1 + voxel_size) >= voxels.max_z-1) {
+                            new_vertices.emplace_back(p5), new_vertices.emplace_back(p6);
+                            new_vertices.emplace_back(p7), new_vertices.emplace_back(p8);
+                            //new_faces.emplace_back(faceUp);
+                            id+=4;
+                        } else continue;*/
+                    }
                 }
             }
         }
@@ -263,8 +293,12 @@ int main(int argc, const char *argv[]) {
         {
             output_file << "v " << p[0] << " " << p[1] << " " << p[2] << "\n";
         }
+        output_file << "o 0" << "\n";
         // write faces
-        // TODO
+        for(std::vector<unsigned int> id:new_faces)
+        {
+            output_file << "f " << id[0] << " " << id[1] << " " << id[2] << " " << id[3] << "\n";
+        }
         std::cout << "file is written in " << file_out << std::endl;
         output_file.close();
     }
