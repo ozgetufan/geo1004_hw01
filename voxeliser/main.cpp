@@ -96,7 +96,7 @@ void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<s
 int main(int argc, const char *argv[]) {
     const char *file_in = "../bag_bk.obj";
     const char *file_out = "vox.obj";
-    float voxel_size = 3.0;
+    float voxel_size = 1.0;
 
     // Read file
     std::vector<Point> vertices;
@@ -164,38 +164,38 @@ int main(int argc, const char *argv[]) {
         std::vector<Point> box = bbox(t0, t1, t2);
         assert(box[0][0] <= box[1][0] && box[0][1] <= box[1][1] && box[0][2] <= box[1][2]);
         // We define the mini voxel grid
-        int fix_x, fix_y, fix_z;
+        int fix_x2, fix_y2, fix_z2;
         float diffX = box[1][0] - box[0][0], diffY = box[1][1] - box[0][1], diffZ = box[1][2] - box[0][2];
         if (diffX == 0) {
-            fix_x = 1;
+            fix_x2 = 1;
         }
-        else fix_x = ceil((box[1][0] - floor(box[1][0]) + box[0][0] - floor(box[0][0])) / voxel_size);
+        else fix_x2 = ceil((box[1][0] - floor(box[1][0]) + box[0][0] - floor(box[0][0])) / voxel_size);
         if (diffY == 0) {
-            fix_y = 1;
+            fix_y2 = 1;
         }
-        else fix_y = ceil((box[1][1] - floor(box[1][1]) + box[0][1] - floor(box[0][1])) / voxel_size);
+        else fix_y2 = ceil((box[1][1] - floor(box[1][1]) + box[0][1] - floor(box[0][1])) / voxel_size);
         if (diffZ == 0) {
-            fix_z = 1;
+            fix_z2 = 1;
         }
-        else fix_z = ceil((box[1][2] - floor(box[1][2]) + box[0][2] - floor(box[0][2])) / voxel_size);
+        else fix_z2 = ceil((box[1][2] - floor(box[1][2]) + box[0][2] - floor(box[0][2])) / voxel_size);
 /*        int offsetX = floor(box[0][0] - min_x / voxel_size),
                 offsetY = floor(box[0][1] - min_y / voxel_size),
                 offsetZ = floor(box[0][2]  - min_z / voxel_size);*/
         int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size,
                 offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size,
                 offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
-        int row_x = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x +1;
-        int row_y = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y +1;
-        int row_z = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z +1;
-        Rows miniRows(row_x, row_y, row_z);
+        int row_x2 = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x2 +2;
+        int row_y2 = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y2 +2;
+        int row_z2 = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z2 +2;
+        Rows miniRows(row_x2, row_y2, row_z2);
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
         assert(subset.total_voxels < voxels.total_voxels);
         // loop through the subset
-        for (int x = 0; x < subset.max_x-1; x += 1) {
-            for (int y = 0; y < subset.max_y-1; y += 1) {
-                for (int z = 0; z < subset.max_z-1; z += 1) {
+        for (int xSub = 0; xSub < subset.max_x-1; xSub += 1) {
+            for (int ySub = 0; ySub < subset.max_y-1; ySub += 1) {
+                for (int zSub = 0; zSub < subset.max_z-1; zSub += 1) {
                     // Equivalence with big grid
-                    int bigX = offsetX + x, bigY = offsetY + y, bigZ = offsetZ + z;
+                    int bigX = offsetX + xSub, bigY = offsetY + ySub, bigZ = offsetZ + zSub;
                     // Voxel's target
                     Point targetA1(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + bigY * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
                     Point targetA2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 1) * voxel_size, floor(min_z) + (bigZ + 0.5) * voxel_size);
@@ -223,7 +223,8 @@ int main(int argc, const char *argv[]) {
 
     // Fill model: the queue starts with an angle and gets filled with its neighbors (if voxel value == 0)
     std::deque<std::vector<int>> q;
-    q.push_back({0,0,0});
+    q.push_back({static_cast<int>(voxels.max_x)-1, static_cast<int>(voxels.max_y)-1, static_cast<int>(voxels.max_z)-1});
+    assert (voxels(voxels.max_x-1, voxels.max_y-1, voxels.max_z-1) == 0);
     while (!q.empty()){
         std::vector<int> vec = q.front();
         voxels(vec[0], vec[1], vec[2]) = 1;
@@ -290,7 +291,7 @@ int main(int argc, const char *argv[]) {
     std::vector<Point> new_vertices;
     std::vector<std::vector<unsigned int>> new_faces;
     // "dist" allows to scale the voxel representation (voxel_size * 0.5 gives scale 1 representation)
-    float dist = voxel_size * 0.4;
+    float dist = voxel_size * 0.5;
     assert(2 * dist <= voxel_size);
     unsigned int id = 1;
     for (int x1 = 0; x1 < voxels.max_x; x1 += 1) {
