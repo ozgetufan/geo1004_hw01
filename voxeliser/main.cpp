@@ -13,11 +13,6 @@
 #include "Rows.h"
 #include "VoxelGrid.h"
 
-/*void find_air(const std::vector<unsigned int> &vox_idx, VoxelGrid& voxels);
-void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<std::string>& visited,
-                          std::unordered_set<std::string>& unvisited, VoxelGrid& voxels);
-std::string my_to_string(const std::vector<unsigned int>& vec);*/
-
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
     const Point cross = (b-d).cross(c-d);
     return ((a-d).dot(cross)) / 6;
@@ -45,58 +40,10 @@ std::vector<Point> bbox(const Point &v0, const Point &v1, const Point &v2) {
     return bbox3D;
 }
 
-/*
-std::string my_to_string(const std::vector<unsigned int>& vec) {
-    std::string out;
-    for (auto s : vec) {
-        out += static_cast<char>(s);
-    }
-    return out;
-}
-
-void find_air(const std::vector<unsigned int>& vox_idx, VoxelGrid& voxels) {
-    std::unordered_set<std::string> visited, unvisited;
-    if (voxels(vox_idx[0], vox_idx[1], vox_idx[2]) == 1) {
-        std::cerr << "Starting voxel is not empty" << std::endl;
-        exit(1);
-    }
-    voxels(vox_idx[0], vox_idx[1], vox_idx[2]) = 2;
-    std::string idx_str = my_to_string(vox_idx);
-    visited.insert(idx_str);
-    find_empty_neighbors(idx_str, visited, unvisited, voxels);
-    while (!unvisited.empty()) {
-        std::string current_vox = *(unvisited.begin());
-        visited.insert(current_vox);
-        find_empty_neighbors(current_vox, visited, unvisited, voxels);
-        unvisited.erase(current_vox);
-    }
-}
-
-void find_empty_neighbors(const std::string &vox_idx, const std::unordered_set<std::string>& visited,
-                          std::unordered_set<std::string>& unvisited, VoxelGrid& voxels) {
-    unsigned int i = static_cast<unsigned char>(vox_idx[0]);
-    unsigned int j = static_cast<unsigned char>(vox_idx[1]);
-    unsigned int k = static_cast<unsigned char>(vox_idx[2]);
-    std::vector<std::vector<unsigned int>> neighbors = {{i - 1, j, k}, {i + 1, j, k}, {i, j - 1, k}, {i, j + 1, k},
-                                                        {i, j, k - 1}, {i, j, k + 1}};
-    for (const auto& n : neighbors) {
-        if ((0 <= n[0]) && (n[0] < voxels.max_x) && (0 <= n[1]) && (n[1] < voxels.max_y) && (0 <= n[2]) && (n[2] < voxels.max_z)) {
-            if (voxels(n[0], n[1], n[2]) != 1) {
-                std::string curr_vox = my_to_string(n);
-                if (unvisited.find(curr_vox) == unvisited.end() && (visited.find(curr_vox) == visited.end())){
-                    voxels(n[0], n[1], n[2]) = 2;
-                    unvisited.insert(curr_vox);
-                }
-            }
-        }
-    }
-}
-*/
-
 int main(int argc, const char *argv[]) {
     const char *file_in = "../bag_bk.obj";
     const char *file_out = "vox.obj";
-    float voxel_size = 1.0;
+    float voxel_size = 1;
 
     // Read file
     std::vector<Point> vertices;
@@ -178,9 +125,6 @@ int main(int argc, const char *argv[]) {
             fix_z2 = 1;
         }
         else fix_z2 = ceil((box[1][2] - floor(box[1][2]) + box[0][2] - floor(box[0][2])) / voxel_size);
-/*        int offsetX = floor(box[0][0] - min_x / voxel_size),
-                offsetY = floor(box[0][1] - min_y / voxel_size),
-                offsetZ = floor(box[0][2]  - min_z / voxel_size);*/
         int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size,
                 offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size,
                 offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
@@ -212,77 +156,62 @@ int main(int argc, const char *argv[]) {
         }
     }
 
-/*    // Fill model
-    std::vector<unsigned int> starting_voxel_idx = {voxels.max_x - 1, 0, 0};
-    find_air(starting_voxel_idx, voxels);
-    for (int i = 0; i < voxels.total_voxels; i++ ) {
-        if (voxels.voxels[i] == 0) {
-            voxels.voxels[i] = 1;
-        }
-    }*/
-
     // Fill model: the queue starts with an angle and gets filled with its neighbors (if voxel value == 0)
     std::deque<std::vector<int>> q;
-    q.push_back({static_cast<int>(voxels.max_x)-1, static_cast<int>(voxels.max_y)-1, static_cast<int>(voxels.max_z)-1});
-    assert (voxels(voxels.max_x-1, voxels.max_y-1, voxels.max_z-1) == 0);
+    q.push_back({0,0,0});
+    assert (voxels(0,0,0) == 0);
+    voxels(0,0,0) = 1;
     while (!q.empty()){
         std::vector<int> vec = q.front();
-        voxels(vec[0], vec[1], vec[2]) = 1;
         q.pop_front();
         if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x)
             && (vec[1] >= 0) && (vec[1] < voxels.max_y)
             && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0] + 1, vec[1], vec[2]) == 0))
         {
             std::vector<int> v1{vec[0] +1, vec[1], vec[2]};
-            if (std::find(q.begin(), q.end(), v1) == q.end()) {
-                q.push_back(v1);
-            }
-            else continue; }
+            voxels(vec[0] +1, vec[1], vec[2]) = 1;
+            q.push_back(v1);
+        }
         if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
              && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y)
              && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1] + 1, vec[2]) == 0))
         {
             std::vector<int> v2{vec[0], vec[1] + 1, vec[2]};
-            if (std::find(q.begin(), q.end(), v2) == q.end()) {
-                q.push_back(v2);
-            }
-            else continue; }
+            voxels(vec[0], vec[1] +1, vec[2]) = 1;
+            q.push_back(v2);
+        }
         if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
              && (vec[1] >= 0) && (vec[1] < voxels.max_y)
              && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]+1) == 0))
         {
             std::vector<int> v3{vec[0], vec[1], vec[2] + 1};
-            if (std::find(q.begin(), q.end(), v3) == q.end()) {
-                q.push_back(v3);
-            }
-            else continue; }
+            voxels(vec[0], vec[1], vec[2] +1) = 1;
+            q.push_back(v3);
+        }
         if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x)
             && (vec[1] >= 0) && (vec[1] < voxels.max_y)
             && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0]-1, vec[1], vec[2]) == 0))
         {
             std::vector<int> v4{vec[0]-1, vec[1], vec[2]};
-            if (std::find(q.begin(), q.end(), v4) == q.end()) {
-                q.push_back(v4);
-            }
-            else continue; }
+            voxels(vec[0]-1, vec[1], vec[2]) = 1;
+            q.push_back(v4);
+        }
         if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
                 && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y)
                 && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1]-1, vec[2]) == 0))
         {
             std::vector<int> v5{vec[0], vec[1]-1, vec[2]};
-            if (std::find(q.begin(), q.end(), v5) == q.end()) {
-                q.push_back(v5);
-            }
-            else continue; }
+            voxels(vec[0], vec[1]-1, vec[2]) = 1;
+            q.push_back(v5);
+        }
         if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
                 && (vec[1] >= 0) && (vec[1] < voxels.max_y)
                 && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]-1) == 0))
         {
             std::vector<int> v6{vec[0], vec[1], vec[2]-1};
-            if (std::find(q.begin(), q.end(), v6) == q.end()) {
-                q.push_back(v6);
-            }
-            else continue; }
+            voxels(vec[0], vec[1], vec[2]-1) = 1;
+            q.push_back(v6);
+        }
         assert (q.size() <= voxels.total_voxels);
     }
 
@@ -353,6 +282,8 @@ int main(int argc, const char *argv[]) {
 
     // Compute and print out the building's volume
     float vox_volume = voxel_size * voxel_size;
+    std::cout << std::endl << "Voxel's volume is " << vox_volume << std::endl;
+    std::cout << "Number of interior voxel: " << interior << " and number of boundary voxels " << bound << std::endl;
     float volume = bound * vox_volume/2 + interior * vox_volume;
     std::cout << "The building's volume is " << volume << " meter cubes." << std::endl;
 
