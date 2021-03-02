@@ -125,12 +125,12 @@ int main(int argc, const char *argv[]) {
             fix_z2 = 1;
         }
         else fix_z2 = ceil((box[1][2] - floor(box[1][2]) + box[0][2] - floor(box[0][2])) / voxel_size);
-        int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size,
-                offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size,
-                offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size;
-        int row_x2 = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x2 +2;
-        int row_y2 = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y2 +2;
-        int row_z2 = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z2 +2;
+        int offsetX = (floor(box[0][0]) - floor(min_x)) / voxel_size -1,
+                offsetY = (floor(box[0][1]) - floor(min_y)) / voxel_size -1,
+                offsetZ = (floor(box[0][2])  - floor(min_z)) / voxel_size -1;
+        int row_x2 = ((floor(box[1][0]) - floor(box[0][0])) / voxel_size) + fix_x2 +3;
+        int row_y2 = ((floor(box[1][1]) - floor(box[0][1])) / voxel_size) + fix_y2 +3;
+        int row_z2 = ((floor(box[1][2]) - floor(box[0][2])) / voxel_size) + fix_z2 +3;
         Rows miniRows(row_x2, row_y2, row_z2);
         VoxelGrid subset(miniRows.x, miniRows.y, miniRows.z);
         assert(subset.total_voxels < voxels.total_voxels);
@@ -149,7 +149,18 @@ int main(int argc, const char *argv[]) {
                     Point targetC2(floor(min_x) + (bigX + 0.5) * voxel_size, floor(min_y) + (bigY + 0.5) * voxel_size, floor(min_z) + (bigZ + 1) * voxel_size);
                     // We assign 1 to the voxel intersecting the triangular mesh
                     if (intersects(targetA1, targetA2, t0, t1, t2) || intersects(targetB1, targetB2, t0, t1, t2) || intersects(targetC1, targetC2, t0, t1, t2)) {
-                        voxels(bigX, bigY, bigZ) = 2;
+                        if (bigX < voxels.max_x && bigY < voxels.max_y && bigZ < voxels.max_z) {
+                            voxels(bigX, bigY, bigZ) = 2;
+                            if (voxel_size < 1) {
+                                if (bigX+1 < voxels.max_x) {voxels(bigX+1, bigY, bigZ) = 2;}
+                                if (bigX-1 >= 0) {voxels(bigX-1, bigY, bigZ) = 2;}
+                                if (bigY+1 < voxels.max_y) {voxels(bigX, bigY+1, bigZ) = 2;}
+                                if (bigY-1 >= 0) {voxels(bigX, bigY-1, bigZ) = 2;}
+                                if (bigZ+1 < voxels.max_z) {voxels(bigX, bigY, bigZ+1) = 2;}
+                                if (bigZ-1 >= 0) {voxels(bigX, bigY, bigZ-1) = 2;}
+                            }
+                        }
+                        else continue;
                     }
                 }
             }
@@ -164,49 +175,37 @@ int main(int argc, const char *argv[]) {
     while (!q.empty()){
         std::vector<int> vec = q.front();
         q.pop_front();
-        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x)
-            && (vec[1] >= 0) && (vec[1] < voxels.max_y)
-            && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0] + 1, vec[1], vec[2]) == 0))
+        if (((vec[0]+1 >= 0) && (vec[0]+1 < voxels.max_x)) && (voxels(vec[0] + 1, vec[1], vec[2]) == 0))
         {
             std::vector<int> v1{vec[0] +1, vec[1], vec[2]};
             voxels(vec[0] +1, vec[1], vec[2]) = 1;
             q.push_back(v1);
         }
-        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
-             && (vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y)
-             && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1] + 1, vec[2]) == 0))
+        if (((vec[1]+1 >= 0) && (vec[1]+1 < voxels.max_y)) && (voxels(vec[0], vec[1] + 1, vec[2]) == 0))
         {
             std::vector<int> v2{vec[0], vec[1] + 1, vec[2]};
             voxels(vec[0], vec[1] +1, vec[2]) = 1;
             q.push_back(v2);
         }
-        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
-             && (vec[1] >= 0) && (vec[1] < voxels.max_y)
-             && (vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]+1) == 0))
+        if (((vec[2]+1 >= 0) && (vec[2]+1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]+1) == 0))
         {
             std::vector<int> v3{vec[0], vec[1], vec[2] + 1};
             voxels(vec[0], vec[1], vec[2] +1) = 1;
             q.push_back(v3);
         }
-        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x)
-            && (vec[1] >= 0) && (vec[1] < voxels.max_y)
-            && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0]-1, vec[1], vec[2]) == 0))
+        if (((vec[0]-1 >= 0) && (vec[0]-1 < voxels.max_x)) && (voxels(vec[0]-1, vec[1], vec[2]) == 0))
         {
             std::vector<int> v4{vec[0]-1, vec[1], vec[2]};
             voxels(vec[0]-1, vec[1], vec[2]) = 1;
             q.push_back(v4);
         }
-        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
-                && (vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y)
-                && (vec[2] >= 0) && (vec[2] < voxels.max_z)) && (voxels(vec[0], vec[1]-1, vec[2]) == 0))
+        if (((vec[1]-1 >= 0) && (vec[1]-1 < voxels.max_y)) && (voxels(vec[0], vec[1]-1, vec[2]) == 0))
         {
             std::vector<int> v5{vec[0], vec[1]-1, vec[2]};
             voxels(vec[0], vec[1]-1, vec[2]) = 1;
             q.push_back(v5);
         }
-        if (((vec[0] >= 0) && (vec[0] < voxels.max_x)
-                && (vec[1] >= 0) && (vec[1] < voxels.max_y)
-                && (vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]-1) == 0))
+        if (((vec[2]-1 >= 0) && (vec[2]-1 < voxels.max_z)) && (voxels(vec[0], vec[1], vec[2]-1) == 0))
         {
             std::vector<int> v6{vec[0], vec[1], vec[2]-1};
             voxels(vec[0], vec[1], vec[2]-1) = 1;
@@ -232,7 +231,7 @@ int main(int argc, const char *argv[]) {
                 if (voxels(x1, y1, z1) == 2) {
                     bound++;
                 }
-                if (voxels(x1, y1, z1) != 1) {
+                if (voxels(x1, y1, z1) == 2) {
                     Point center((floor(min_x) + (x1 + 0.5) * voxel_size), (floor(min_y) + (y1 + 0.5) * voxel_size), (floor(min_z) + (z1 + 0.5) * voxel_size));
                     // Points to store
                     Point p1(center[0] - dist, center[1] - dist, center[2] - dist);
@@ -281,7 +280,7 @@ int main(int argc, const char *argv[]) {
     else std::cout << "Unable to open file";
 
     // Compute and print out the building's volume
-    float vox_volume = voxel_size * voxel_size;
+    float vox_volume = voxel_size * voxel_size * voxel_size;
     std::cout << std::endl << "Voxel's volume is " << vox_volume << std::endl;
     std::cout << "Number of interior voxel: " << interior << " and number of boundary voxels " << bound << std::endl;
     float volume = bound * vox_volume/2 + interior * vox_volume;
