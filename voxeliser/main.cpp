@@ -231,7 +231,7 @@ int main(int argc, const char *argv[]) {
                 if (voxels(x1, y1, z1) == 2) {
                     bound++;
                 }
-                if (voxels(x1, y1, z1) == 2) {
+                if (voxels(x1, y1, z1) != 1) {
                     Point center((floor(min_x) + (x1 + 0.5) * voxel_size), (floor(min_y) + (y1 + 0.5) * voxel_size), (floor(min_z) + (z1 + 0.5) * voxel_size));
                     // Points to store
                     Point p1(center[0] - dist, center[1] - dist, center[2] - dist);
