@@ -8,10 +8,13 @@
 #include <algorithm>
 #include <unordered_set>
 # include <deque>
+#include <chrono>
 
 #include "Point.h"
 #include "Rows.h"
 #include "VoxelGrid.h"
+
+auto start = std::chrono::high_resolution_clock::now();
 
 float signed_volume(const Point &a, const Point &b, const Point &c, const Point &d) {
     const Point cross = (b-d).cross(c-d);
@@ -285,6 +288,10 @@ int main(int argc, const char *argv[]) {
     std::cout << "Number of interior voxel: " << interior << " and number of boundary voxels " << bound << std::endl;
     float volume = bound * vox_volume/2 + interior * vox_volume;
     std::cout << "The building's volume is " << volume << " meter cubes." << std::endl;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end-start;
+    std::cout << "Execution time:  " << diff.count() << " s\n";
 
     return 0;
 }
