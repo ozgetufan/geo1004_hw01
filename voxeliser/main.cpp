@@ -92,7 +92,6 @@ int main(int argc, const char *argv[]) {
         ss.clear();
         ss.str(std::string());
     }
-    assert(faces[100][0] == 83);  // a test to check if the values are added correctly
 
     // Create grid
     int fix_x = ceil((max_x - floor(max_x) + min_x - floor(min_x)) / voxel_size);
@@ -285,7 +284,7 @@ int main(int argc, const char *argv[]) {
     // Compute and print out the building's volume
     float vox_volume = voxel_size * voxel_size * voxel_size;
     std::cout << std::endl << "Voxel's volume is " << vox_volume << std::endl;
-    std::cout << "Number of interior voxel: " << interior << " and number of boundary voxels " << bound << std::endl;
+    std::cout << "Number of interior voxel: " << interior << " and number of boundary voxels: " << bound << std::endl;
     float volume = bound * vox_volume/2 + interior * vox_volume;
     std::cout << "The building's volume is " << volume << " meter cubes." << std::endl;
 
